@@ -8,7 +8,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom Styling
+# Styling
 st.markdown("""
     <style>
     .main-title {
@@ -43,6 +43,12 @@ st.markdown("""
         margin-bottom: 12px;
         box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
     }
+    .card-title {
+        font-weight: bold;
+        color: #1F4E79;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
     .card-content {
         font-size: 15px;
         color: #262626;
@@ -59,7 +65,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Complete Cases Knowledge Base
+# Cases Knowledge Base
 CASES = {
     "Vaka A (Papatya)": {
         "kod": "VAKA_A",
@@ -67,120 +73,127 @@ CASES = {
         "categories": {
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "balya", "saman", "kaba yem"],
+                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "balya", "saman", "kaba"],
                 "content": "Günlük rasyonda: 10 kg mısır silajı, 6 kg yonca kuru otu, 4 kg saman ve 8 kg fabrika kesif yemi verilmektedir."
             },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
                 "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "dağ", "ova"],
-                "content": "Ceyhan Ovası (rakım ~50 metre). Sabit süt tesisi, rakım/yayla nakil öyküsü yok."
+                "content": "Hayvan Ceyhan ovasındaki (rakım ~50 metre) sabit besi ve süt tesisinde doğup büyümüştür. Herhangi bir yayla veya yüksek rakım nakli öyküsü yoktur."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Anamnez",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi"],
-                "content": "Geçmişinde kronik hastalık kaydı yoktur. 2 ay önce sorunsuz doğum yapmıştır."
+                "name": "Geçmiş Hastalık & Geçmiş Öykü",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce"],
+                "content": "Geçmişinde kaydedilmiş kronik bir mastitis, metritis veya metabolik hastalık öyküsü bulunmamaktadır. 2 ay önce sorunsuz doğum yapmıştır."
             },
-            "DEHIDRASYON": {
-                "name": "Dehidrasyon & Deri Turgoru",
-                "keywords": ["dehidrasyon", "deri kıvrımı", "deri turgoru", "göz çöküklüğü", "turgor"],
-                "content": "Dehidrasyon: %6 | Deri kıvrım kalıcılık süresi: 6 saniye | Göz küresi çöküklüğü: 3 mm."
-            },
-            "ATES": {
-                "name": "Vücut Sıcaklığı (Ateş)",
-                "keywords": ["ateş", "sıcaklık", "derece", "rektal derece", "vücut sıcaklığı"],
-                "content": "Vücut Sıcaklığı (T): 39.8 °C"
-            },
-            "NABIZ": {
-                "name": "Kalp Frekansı (Nabız)",
-                "keywords": ["nabız", "kalp frekansı", "atım"],
-                "content": "Kalp Frekansı (HR): 102 atım/dakika"
-            },
-            "SOLUNUM": {
-                "name": "Solunum Frekansı",
-                "keywords": ["solunum", "solunum frekansı", "nefes"],
-                "content": "Solunum Frekansı (RR): 42 nefes/dakika"
-            },
-            "MUKOZA_CRT": {
-                "name": "Mukoza & CRT",
-                "keywords": ["mukoza", "crt", "kılcal damar", "dolum süresi"],
-                "content": "Mukoza: Soluk pembe | CRT (Kılcal Damar Dolum Süresi): 2.5 saniye"
-            },
-            "LENF_NODLARI": {
-                "name": "Yüzeysel Lenf Yumruları",
-                "keywords": ["lenf", "lenf nodu", "lenf yumrusu", "lnn", "prescapularis", "submandibularis", "prefemoralis"],
-                "content": "Lnn. submandibularis, Lnn. prescapularis ve Lnn. prefemoralis simetrik, normal büyüklükte, ağrısız."
-            },
-            "RUMEN_ISTAH": {
-                "name": "Rumen Motilitesi & İştah & Geviş",
-                "keywords": ["rumen", "motilite", "iştah", "geviş", "ruminasyon", "kontraksiyon"],
-                "content": "Rumen hareketi: 5 dakikada 1 kez (zayıf kontraksiyon) | İştah: Anoreksik | Geviş getirme: Yok."
-            },
-            "POSTUR_MIZAC": {
-                "name": "Postür & Mizaç & Duruş",
-                "keywords": ["postür", "duruş", "mizaç", "kambur", "durgunluk", "kifoz", "dirsek"],
-                "content": "Duruş: Sırt kamburlaşmış (kifoz), dirsekler dışa açılmış, mizaç durgun, isteksiz."
-            },
-            "ODEM_JUGULARIS": {
-                "name": "Ödem & Vena Jugularis",
-                "keywords": ["ödem", "gerdan", "submandibuler", "jugularis", "staz", "boyun damarı"],
-                "content": "Gerdan ve çene altında soğuk, hamur kıvamında ödem | Vena jugularis stazı (+), çene açısına kadar gergin, yalancı jugular nabız (+)."
-            },
-            "DISKI_IDRAR": {
-                "name": "Dışkı ve İdrar Muayenesi",
-                "keywords": ["dışkı", "idrar", "gaita", "melena"],
-                "content": "Dışkı: Miktarı azalmış, koyu kıvamlı. İdrar: Normal görünümde."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı testleri", "retikulum ağrı", "pinch"],
-                "content": "Sopa testi: Pozitif (+) | Kama testi: Pozitif (+) | Withers pinch (cidago sıkma) testi: Pozitif (+)."
+            "VITAL_BULGULAR": {
+                "name": "Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "dolum", "dehidrasyon", "deri", "vital"],
+                "content": "Vücut Sıcaklığı: 39.8 °C | Kalp Frekansı: 102 atım/dk | Solunum Frekansı: 42 nefes/dk | Mukoza: Soluk pembe | CRT: 2.5 saniye | Dehidrasyon: %6 | Göz Küresi: Belirgin çökmüş | Gerdan ve submandibuler bölgede soğuk hamur ödem | Vena jugularis stazı +, yalancı jugular nabız +."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp sesleri", "oskültasyon", "üfürüm", "şılpırtı", "splashing", "boğuk", "akciğer sesleri"],
-                "content": "Kalp Oskültasyonu: Su çalkantı (splashing) sesi ve boğuk kalp sesleri. Akciğer Oskültasyonu: Ventro-lateral alanlarda sesler hafif azalmış."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer"],
+                "content": "Kalp Oskültasyonu: Gaz ve pürülan sıvının çalkalanmasına bağlı çamaşır makinesi / su şılpırtısı (splashing) sesi ve boğuk kalp sesleri duyuluyor. Akciğer Oskültasyonu: Ventro-lateral alanlarda solunum sesleri hafif azalmış."
             },
-            "GLUTARALDEHIT": {
-                "name": "Glutaraldehit Testi",
-                "keywords": ["glutaraldehit", "pıhtılaşma süresi"],
-                "content": "Glutaraldehit Testi: 2.5 dakikada pıhtılaşma (Pozitif)"
+            "AGRI_TESTLERI": {
+                "name": "Retikulum Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "hassasiyet", "inleme"],
+                "content": "Sopa testi, kama testi ve Withers pinch (cidago sıkma) ağrı testlerinin tamamı Pozitif (+). Hayvan sırtını kamburlaştırıp inlemektedir."
+            },
+            "DEDEKTOR_MUAYENESI": {
+                "name": "Metal Dedektör / Ferroskop Muayenesi",
+                "keywords": ["dedektör", "dedektor", "metal", "ferroskop", "hauptner", "mıknatıs", "yabancı cisim"],
+                "content": "Metal Dedektör (Ferroskop) Muayenesi: Retikulum / Sifoid kıkırdak bölgesi üzerinde Pozitif (+) şiddetli metalik sinyal ve ses reaksiyonu alındı."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "cbc", "lökosit", "wbc", "kan sayımı", "fibrinojen", "pcv", "hematokrit", "eritrosit", "rbc", "pp/f"],
-                "content": "Lökosit (WBC): 22.4 x10³/µL | Eritrosit (RBC): 5.4 x10⁶/µL | Hemoglobin (Hb): 9.2 g/dL | Hematokrit (PCV): %28 | Plazma Fibrinojeni: 1250 mg/dL | Total Protein: 7.9 g/dL | PP/F Oranı: 6.3 | Nötrofil: %74 | Lenfosit: %20."
+                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "kan sayımı", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "nötrofil", "lenfosit", "monosit", "rdw", "mcv", "mch", "mchc", "plt", "trombosit", "eozinofil", "bazofil", "cbc"],
+                "content": "Lökosit (WBC): 22.4 x10³/µL | Eritrosit (RBC): 5.4 x10⁶/µL | Hemoglobin (Hb): 9.2 g/dL | Hematokrit (PCV): %28 | MCV: 51.8 fL | MCH: 17.0 pg | MCHC: 32.8 g/dL | RDW: %16.2 | Nötrofil: %68 (Çok çekirdekli: %60, Bant: %8) | Lenfosit: %22 | Monosit: %6 | Eozinofil: %3 | Bazofil: %1 | Trombosit (PLT): 380 x10³/µL | Plazma Fibrinojeni: 1250 mg/dL | Total Protein: 7.9 g/dL | PP/F Oranı: 6.3."
             },
-            "ALT": {"name": "ALT (Alanin Aminotransferaz)", "keywords": ["alt"], "content": "ALT: 22 U/L"},
-            "AST": {"name": "AST (Aspartat Aminotransferaz)", "keywords": ["ast"], "content": "AST: 118 U/L"},
-            "GGT": {"name": "GGT (Gama Glutamil Transferaz)", "keywords": ["ggt"], "content": "GGT: 24 U/L"},
-            "ALP": {"name": "ALP (Alkalen Fosfataz)", "keywords": ["alp"], "content": "ALP: 75 U/L"},
-            "CK": {"name": "CK (Kreatin Kinaz)", "keywords": ["ck"], "content": "CK: 180 U/L"},
-            "LDH": {"name": "LDH (Laktat Dehidrogenaz)", "keywords": ["ldh"], "content": "LDH: 360 U/L"},
-            "BUN": {"name": "BUN (Kan Üre Azotu)", "keywords": ["bun", "üre"], "content": "BUN: 28 mg/dL"},
-            "KREATININ": {"name": "Kreatinin", "keywords": ["kreatinin"], "content": "Kreatinin: 1.2 mg/dL"},
-            "TROPONIN": {"name": "Kardiyak Troponin I", "keywords": ["troponin"], "content": "Kardiyak Troponin I (cTnI): 0.85 ng/mL"},
-            "ALBUMIN": {"name": "Albümin", "keywords": ["albümin", "albumin"], "content": "Albümin: 2.8 g/dL"},
-            "GLOBULIN": {"name": "Globülin", "keywords": ["globülin", "globulin"], "content": "Globülin: 5.1 g/dL"},
-            "BILIRUBIN": {"name": "Bilirubin", "keywords": ["bilirubin"], "content": "Total Bilirubin: 0.4 mg/dL | İndirekt Bilirubin: 0.2 mg/dL"},
-            "GLIKOZ": {"name": "Glikoz", "keywords": ["glikoz", "seker"], "content": "Glikoz: 68 mg/dL"},
+            "BIYOKIMYA_ALT": {
+                "name": "ALT (Alanin Aminotransferaz)",
+                "keywords": ["alt"],
+                "content": "ALT: 22 U/L"
+            },
+            "BIYOKIMYA_AST": {
+                "name": "AST (Aspartat Aminotransferaz)",
+                "keywords": ["ast"],
+                "content": "AST: 118 U/L"
+            },
+            "BIYOKIMYA_GGT": {
+                "name": "GGT (Gama Glutamil Transferaz)",
+                "keywords": ["ggt"],
+                "content": "GGT: 24 U/L"
+            },
+            "BIYOKIMYA_ALP": {
+                "name": "ALP (Alkalen Fosfataz)",
+                "keywords": ["alp"],
+                "content": "ALP: 88 U/L"
+            },
+            "BIYOKIMYA_CK": {
+                "name": "CK (Kreatin Kinaz)",
+                "keywords": ["ck"],
+                "content": "CK: 142 U/L"
+            },
+            "BIYOKIMYA_LDH": {
+                "name": "LDH (Laktat Dehidrogenaz)",
+                "keywords": ["ldh"],
+                "content": "LDH: 980 U/L"
+            },
+            "BIYOKIMYA_BUN": {
+                "name": "BUN (Kan Üre Azotu)",
+                "keywords": ["bun", "üre", "ure"],
+                "content": "BUN: 28 mg/dL"
+            },
+            "BIYOKIMYA_KREATININ": {
+                "name": "Kreatinin",
+                "keywords": ["kreatinin"],
+                "content": "Kreatinin: 1.2 mg/dL"
+            },
+            "BIYOKIMYA_TROPONIN": {
+                "name": "Kardiyak Troponin I (cTnI)",
+                "keywords": ["troponin", "ctni"],
+                "content": "Kardiyak Troponin I (cTnI): 0.85 ng/mL"
+            },
+            "BIYOKIMYA_ALBUMIN": {
+                "name": "Serum Albümin (ALB)",
+                "keywords": ["albümin", "albumin", "alb"],
+                "content": "Serum Albümin (ALB): 2.4 g/dL"
+            },
+            "BIYOKIMYA_GLOBULIN": {
+                "name": "Serum Globülin",
+                "keywords": ["globülin", "globulin"],
+                "content": "Serum Globülin: 5.5 g/dL"
+            },
+            "BIYOKIMYA_TP": {
+                "name": "Serum Total Protein (TP)",
+                "keywords": ["total protein", "tp"],
+                "content": "Serum Total Protein (TP): 7.9 g/dL"
+            },
+            "GLUTERALDEHIT": {
+                "name": "Glutaraldehit Pıhtılaşma Testi",
+                "keywords": ["glutaraldehit", "gluteraldehit", "pıhtılaşma"],
+                "content": "Glutaraldehit Pıhtılaşma Testi: 2.5 dakikada pıhtılaşma (Pozitif)."
+            },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "laktat"],
-                "content": "Kan pH: 7.32 | pO₂: 72 mmHg | pCO₂: 48 mmHg | HCO₃⁻: 20.2 mmol/L | Baz Açığı: -4.1 mmol/L | Laktat: 2.8 mmol/L"
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat", "oksijen"],
+                "content": "Kan pH: 7.32 | pO₂: 72 mmHg | pCO₂: 48 mmHg | HCO₃⁻: 20.2 mmol/L | Baz Açığı (BE): -4.1 mmol/L | Laktat: 2.8 mmol/L."
             },
             "ULTRASON": {
-                "name": "Ultrasonografi (USG)",
+                "name": "Ultrasonografi (USG) Bulguları",
                 "keywords": ["ultrason", "usg"],
                 "content": "Ultrasonografi: Perikardiyal boşlukta fibrin bantları, gaz ekojeniteleri ve 4 cm sıvı birikimi. Retikulum çevresinde yapışıklıklar."
             },
             "PERIKARDIYOSENTEZ": {
-                "name": "Perikardiyosentez",
+                "name": "Perikardiyosentez Bulguları",
                 "keywords": ["perikardiyosentez", "ponksiyon", "delme"],
-                "content": "Perikardiyosentez: Kirli sarı-yeşil, pürülan eksuda. Protein: 4.8 g/dL."
+                "content": "Perikardiyosentez: Kirli sarı-yeşil, pis kokulu pürülan eksuda."
             },
             "KULTUR": {
                 "name": "Mikrobiyolojik Kültür",
-                "keywords": ["kültür", "bakteri", "mikrobiyoloji"],
+                "keywords": ["kültür", "bakteri"],
                 "content": "Mikrobiyolojik Kültür: Trueperella pyogenes üremesi."
             }
         }
@@ -191,125 +204,107 @@ CASES = {
         "categories": {
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "süt yem"],
+                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "süt"],
                 "content": "Günlük rasyonda: 12 kg mısır silajı, 7 kg yonca kuru otu, 3 kg saman ve 9 kg süt yemi verilmektedir."
             },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya"],
-                "content": "Ceyhan Ovası (rakım ~50 metre). Sabit süt tesisi, rakım/yayla nakil öyküsü yok."
+                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik"],
+                "content": "Sabit süt işletmesinde barındırılmaktadır. Rakım değişikliği veya nakil öyküsü bulunmamaktadır."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Anamnez",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi"],
-                "content": "3 hafta önce doğum sonrası metritis ve klinik mastitis tedavisi görmüştür."
+                "name": "Geçmiş Hastalık & Geçmiş Öykü",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce"],
+                "content": "Yaklaşık 3 hafta önce doğum sonrası metritis (rahim iltihabı) ve klinik mastitis tedavisi görmüştür."
             },
-            "DEHIDRASYON": {
-                "name": "Dehidrasyon & Deri Turgoru",
-                "keywords": ["dehidrasyon", "deri kıvrımı", "deri turgoru", "göz çöküklüğü", "turgor"],
-                "content": "Dehidrasyon: %5 | Deri kıvrım kalıcılık süresi: 5 saniye | Göz küresi çöküklüğü: 2 mm."
-            },
-            "ATES": {
-                "name": "Vücut Sıcaklığı (Ateş)",
-                "keywords": ["ateş", "sıcaklık", "derece", "rektal derece", "vücut sıcaklığı"],
-                "content": "Vücut Sıcaklığı (T): 40.2 °C"
-            },
-            "NABIZ": {
-                "name": "Kalp Frekansı (Nabız)",
-                "keywords": ["nabız", "kalp frekansı", "atım"],
-                "content": "Kalp Frekansı (HR): 110 atım/dakika"
-            },
-            "SOLUNUM": {
-                "name": "Solunum Frekansı",
-                "keywords": ["solunum", "solunum frekansı", "nefes"],
-                "content": "Solunum Frekansı (RR): 38 nefes/dakika"
-            },
-            "MUKOZA_CRT": {
-                "name": "Mukoza & CRT",
-                "keywords": ["mukoza", "crt", "kılcal damar", "dolum süresi"],
-                "content": "Mukoza: Soluk | CRT: 3.0 saniye"
-            },
-            "LENF_NODLARI": {
-                "name": "Yüzeysel Lenf Yumruları",
-                "keywords": ["lenf", "lenf nodu", "lenf yumrusu", "lnn", "prescapularis", "submandibularis", "prefemoralis"],
-                "content": "Lnn. prescapularis ve Lnn. prefemoralis hafif büyümüş, ağrısız."
-            },
-            "RUMEN_ISTAH": {
-                "name": "Rumen Motilitesi & İştah & Geviş",
-                "keywords": ["rumen", "motilite", "iştah", "geviş", "ruminasyon", "kontraksiyon"],
-                "content": "Rumen hareketi: 5 dakikada 2 kez | İştah: İştahsız | Geviş getirme: Azalmış."
-            },
-            "POSTUR_MIZAC": {
-                "name": "Postür & Mizaç & Duruş",
-                "keywords": ["postür", "duruş", "mizaç", "kambur", "durgunluk", "topallık", "bacak"],
-                "content": "Duruş: Sol ön ve arka bacağa yük vermekten kaçınıyor (topallık), mizaç düşkün."
-            },
-            "ODEM_JUGULARIS": {
-                "name": "Ödem & Vena Jugularis",
-                "keywords": ["ödem", "gerdan", "submandibuler", "jugularis", "staz", "boyun damarı"],
-                "content": "Gerdan bölgesinde soğuk ödem | Vena jugularis dolgun, nabız yok."
-            },
-            "DISKI_IDRAR": {
-                "name": "Dışkı ve İdrar Muayenesi",
-                "keywords": ["dışkı", "idrar", "gaita", "melena"],
-                "content": "Dışkı: Normal kıvam ve miktarda. İdrar: Normal görünümde."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı testleri", "retikulum ağrı", "pinch"],
-                "content": "Sopa testi: Negatif (-) | Kama testi: Negatif (-) | Withers pinch testi: Negatif (-)."
+            "VITAL_BULGULAR": {
+                "name": "Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "dolum", "eklem", "topallık", "bacak", "dehidrasyon"],
+                "content": "Vücut Sıcaklığı: 40.2 °C | Kalp Frekansı: 110 atım/dk | Solunum Frekansı: 38 nefes/dk | Mukoza: Soluk | CRT: 3.0 saniye | Dehidrasyon: %4 | Göz Küresi: Hafif çökmüş | Gerdan ödemli | Sol carpus ve tarsus eklemlerinde sıcak, şiş ve ağrılı yapı."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp sesleri", "oskültasyon", "üfürüm", "şılpırtı", "splashing", "boğuk", "akciğer sesleri"],
-                "content": "Kalp Oskültasyonu: Triküspid kapak odağında Grade IV/VI holosistolik üfürüm. Akciğer Oskültasyonu: Normal veziküler sesler."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer", "triküspid"],
+                "content": "Kalp Oskültasyonu: Triküspid kapak odak sahası üzerinde Grade IV/VI holosistolik üfürüm duyulmaktadır. Su çalkantı (splashing) sesi YOKTUR. Vena jugularis dolgun ancak pulsasyon yoktur."
             },
-            "GLUTARALDEHIT": {
-                "name": "Glutaraldehit Testi",
-                "keywords": ["glutaraldehit", "pıhtılaşma süresi"],
-                "content": "Glutaraldehit Testi: 4.0 dakikada pıhtılaşma (Pozitif)"
+            "AGRI_TESTLERI": {
+                "name": "Retikulum Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
+                "content": "Retikulum ağrı testleri (Sopa ve Kama) NEGATİF. Ön karın veya retikulum bölgesinde ağrı reaksiyonu yoktur."
+            },
+            "DEDEKTOR_MUAYENESI": {
+                "name": "Metal Dedektör / Ferroskop Muayenesi",
+                "keywords": ["dedektör", "dedektor", "metal", "ferroskop", "hauptner", "mıknatıs", "yabancı cisim"],
+                "content": "Metal Dedektör (Ferroskop) Muayenesi: Negatif (-), retikulum veya ön karın bölgesinde metalik sinyal saptanmadı."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "cbc", "lökosit", "wbc", "kan sayımı", "fibrinojen", "pcv", "hematokrit", "eritrosit", "rbc", "pp/f"],
-                "content": "Lökosit (WBC): 26.8 x10³/µL | Eritrosit (RBC): 4.2 x10⁶/µL | Hemoglobin (Hb): 7.2 g/dL | Hematokrit (PCV): %22 | Plazma Fibrinojeni: 980 mg/dL | Total Protein: 8.8 g/dL | PP/F Oranı: 8.98 | Nötrofil: %80 | Lenfosit: %15."
+                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "kan sayımı", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "nötrofil", "lenfosit", "monosit", "rdw", "mcv", "mch", "mchc", "plt", "trombosit", "eozinofil", "bazofil", "cbc"],
+                "content": "Lökosit (WBC): 26.8 x10³/µL | Eritrosit (RBC): 4.2 x10⁶/µL | Hemoglobin (Hb): 7.5 g/dL | Hematokrit (PCV): %22 | MCV: 52.3 fL | MCH: 17.8 pg | MCHC: 34.0 g/dL | RDW: %17.5 | Nötrofil: %72 | Lenfosit: %18 | Monosit: %7 | Eozinofil: %2 | Bazofil: %1 | Trombosit (PLT): 420 x10³/µL | Plazma Fibrinojeni: 980 mg/dL | Total Protein: 8.8 g/dL | PP/F Oranı: 8.98."
             },
-            "ALT": {"name": "ALT (Alanin Aminotransferaz)", "keywords": ["alt"], "content": "ALT: 25 U/L"},
-            "AST": {"name": "AST (Aspartat Aminotransferaz)", "keywords": ["ast"], "content": "AST: 145 U/L"},
-            "GGT": {"name": "GGT (Gama Glutamil Transferaz)", "keywords": ["ggt"], "content": "GGT: 28 U/L"},
-            "ALP": {"name": "ALP (Alkalen Fosfataz)", "keywords": ["alp"], "content": "ALP: 82 U/L"},
-            "CK": {"name": "CK (Kreatin Kinaz)", "keywords": ["ck"], "content": "CK: 210 U/L"},
-            "LDH": {"name": "LDH (Laktat Dehidrogenaz)", "keywords": ["ldh"], "content": "LDH: 390 U/L"},
-            "BUN": {"name": "BUN (Kan Üre Azotu)", "keywords": ["bun", "üre"], "content": "BUN: 34 mg/dL"},
-            "KREATININ": {"name": "Kreatinin", "keywords": ["kreatinin"], "content": "Kreatinin: 1.5 mg/dL"},
-            "TROPONIN": {"name": "Kardiyak Troponin I", "keywords": ["troponin"], "content": "Kardiyak Troponin I (cTnI): 1.20 ng/mL"},
-            "ALBUMIN": {"name": "Albümin", "keywords": ["albümin", "albumin"], "content": "Albümin: 2.3 g/dL"},
-            "GLOBULIN": {"name": "Globülin", "keywords": ["globülin", "globulin"], "content": "Globülin: 6.5 g/dL"},
-            "BILIRUBIN": {"name": "Bilirubin", "keywords": ["bilirubin"], "content": "Total Bilirubin: 0.5 mg/dL | İndirekt Bilirubin: 0.3 mg/dL"},
-            "GLIKOZ": {"name": "Glikoz", "keywords": ["glikoz", "seker"], "content": "Glikoz: 62 mg/dL"},
+            "BIYOKIMYA_ALT": {
+                "name": "ALT (Alanin Aminotransferaz)",
+                "keywords": ["alt"],
+                "content": "ALT: 28 U/L"
+            },
+            "BIYOKIMYA_AST": {
+                "name": "AST (Aspartat Aminotransferaz)",
+                "keywords": ["ast"],
+                "content": "AST: 145 U/L"
+            },
+            "BIYOKIMYA_GGT": {
+                "name": "GGT (Gama Glutamil Transferaz)",
+                "keywords": ["ggt"],
+                "content": "GGT: 28 U/L"
+            },
+            "BIYOKIMYA_BUN": {
+                "name": "BUN (Kan Üre Azotu)",
+                "keywords": ["bun", "üre", "ure"],
+                "content": "BUN: 34 mg/dL"
+            },
+            "BIYOKIMYA_KREATININ": {
+                "name": "Kreatinin",
+                "keywords": ["kreatinin"],
+                "content": "Kreatinin: 1.5 mg/dL"
+            },
+            "BIYOKIMYA_TROPONIN": {
+                "name": "Kardiyak Troponin I (cTnI)",
+                "keywords": ["troponin", "ctni"],
+                "content": "Kardiyak Troponin I (cTnI): 1.20 ng/mL"
+            },
+            "BIYOKIMYA_ALBUMIN": {
+                "name": "Serum Albümin (ALB)",
+                "keywords": ["albümin", "albumin", "alb"],
+                "content": "Serum Albümin (ALB): 2.3 g/dL"
+            },
+            "BIYOKIMYA_GLOBULIN": {
+                "name": "Serum Globülin",
+                "keywords": ["globülin", "globulin"],
+                "content": "Serum Globülin: 6.5 g/dL"
+            },
+            "BIYOKIMYA_TP": {
+                "name": "Serum Total Protein (TP)",
+                "keywords": ["total protein", "tp"],
+                "content": "Serum Total Protein (TP): 8.8 g/dL"
+            },
+            "GLUTERALDEHIT": {
+                "name": "Glutaraldehit Pıhtılaşma Testi",
+                "keywords": ["glutaraldehit", "gluteraldehit", "pıhtılaşma"],
+                "content": "Glutaraldehit Pıhtılaşma Testi: 4.0 dakikada pıhtılaşma (Pozitif)."
+            },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "laktat"],
-                "content": "Kan pH: 7.30 | pO₂: 68 mmHg | pCO₂: 52 mmHg | HCO₃⁻: 18.8 mmol/L | Baz Açığı: -5.2 mmol/L | Laktat: 3.1 mmol/L"
-            },
-            "ULTRASON": {
-                "name": "Ultrasonografi (USG)",
-                "keywords": ["ultrason", "usg"],
-                "content": "Ultrasonografi: Triküspid kapak üzerinde 3.5 cm çapında pürüzlü hiperekojen kitle."
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
+                "content": "Kan pH: 7.30 | pO₂: 68 mmHg | pCO₂: 52 mmHg | HCO₃⁻: 18.8 mmol/L | Baz Açığı (BE): -5.2 mmol/L | Laktat: 3.1 mmol/L."
             },
             "EKOKARDIYOGRAFI": {
-                "name": "Ekokardiyografi",
-                "keywords": ["ekokardiyografi", "eko"],
-                "content": "Ekokardiyografi: Triküspid kapak üzerinde 3.5 cm çapında kitle (vejetasyon)."
-            },
-            "PERIKARDIYOSENTEZ": {
-                "name": "Perikardiyosentez",
-                "keywords": ["perikardiyosentez", "ponksiyon", "delme"],
-                "content": "Perikardiyosentez: Uygulanmadı / Sıvı birikimi yok."
+                "name": "Ekokardiyografi Bulguları",
+                "keywords": ["ekokardiyografi", "eko", "vejetasyon"],
+                "content": "Ekokardiyografi: Triküspid kapak üzerinde 3.5 cm çapında pürüzlü hiperekojen kitle (vejetasyon)."
             },
             "KULTUR": {
                 "name": "Mikrobiyolojik Kültür",
-                "keywords": ["kültür", "bakteri", "mikrobiyoloji"],
+                "keywords": ["kültür", "bakteri"],
                 "content": "Kan Kültürü & Eklem Sıvısı Kültürü: Trueperella pyogenes üremesi."
             }
         }
@@ -325,121 +320,103 @@ CASES = {
             },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "dağ"],
-                "content": "3 hafta önce alçak rakımlı tesisten Doğu Anadolu'daki 1900 metre rakımlı yaylaya nakledilmiştir."
+                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "dağ", "ova", "metre"],
+                "content": "Hayvan 3 hafta önce alçak rakımlı kıyı tesisinden Doğu Anadolu'daki 1900 metre rakımlı yüksek dağ yaylasına otlatılmak üzere nakledilmiştir."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Anamnez",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi"],
-                "content": "Geçmişinde kaydedilmiş herhangi bir hastalık öyküsü yoktur."
+                "name": "Geçmiş Hastalık & Geçmiş Öykü",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce"],
+                "content": "Geçmişinde kaydedilmiş hiçbir sistemik, metabolik veya enfeksiyöz hastalık öyküsü yoktur."
             },
-            "DEHIDRASYON": {
-                "name": "Dehidrasyon & Deri Turgoru",
-                "keywords": ["dehidrasyon", "deri kıvrımı", "deri turgoru", "göz çöküklüğü", "turgor"],
-                "content": "Dehidrasyon: %0 | Deri kıvrım kalıcılık süresi: 1 saniye | Göz küresi çöküklüğü: 0 mm."
-            },
-            "ATES": {
-                "name": "Vücut Sıcaklığı (Ateş)",
-                "keywords": ["ateş", "sıcaklık", "derece", "rektal derece", "vücut sıcaklığı"],
-                "content": "Vücut Sıcaklığı (T): 38.6 °C"
-            },
-            "NABIZ": {
-                "name": "Kalp Frekansı (Nabız)",
-                "keywords": ["nabız", "kalp frekansı", "atım"],
-                "content": "Kalp Frekansı (HR): 96 atım/dakika"
-            },
-            "SOLUNUM": {
-                "name": "Solunum Frekansı",
-                "keywords": ["solunum", "solunum frekansı", "nefes"],
-                "content": "Solunum Frekansı (RR): 46 nefes/dakika"
-            },
-            "MUKOZA_CRT": {
-                "name": "Mukoza & CRT",
-                "keywords": ["mukoza", "crt", "kılcal damar", "dolum süresi"],
-                "content": "Mukoza: Pembe | CRT: 1.8 saniye"
-            },
-            "LENF_NODLARI": {
-                "name": "Yüzeysel Lenf Yumruları",
-                "keywords": ["lenf", "lenf nodu", "lenf yumrusu", "lnn", "prescapularis", "submandibularis", "prefemoralis"],
-                "content": "Tüm yüzeysel lenf düğümleri simetrik, normal büyüklükte ve ağrısız."
-            },
-            "RUMEN_ISTAH": {
-                "name": "Rumen Motilitesi & İştah & Geviş",
-                "keywords": ["rumen", "motilite", "iştah", "geviş", "ruminasyon", "kontraksiyon"],
-                "content": "Rumen hareketi: 5 dakikada 3 kez | İştah: Azalmış | Geviş getirme: Var."
-            },
-            "POSTUR_MIZAC": {
-                "name": "Postür & Mizaç & Duruş",
-                "keywords": ["postür", "duruş", "mizaç", "kambur", "durgunluk"],
-                "content": "Duruş: Normal, çabuk yorulma ve isteksizlik mevcut."
-            },
-            "ODEM_JUGULARIS": {
-                "name": "Ödem & Vena Jugularis",
-                "keywords": ["ödem", "gerdan", "submandibuler", "jugularis", "staz", "boyun damarı"],
-                "content": "Göğüs önü ve gerdanda geniş alana yayılmış soğuk hamur ödem | Vena jugularis dolgun, nabız yok."
-            },
-            "DISKI_IDRAR": {
-                "name": "Dışkı ve İdrar Muayenesi",
-                "keywords": ["dışkı", "idrar", "gaita", "melena"],
-                "content": "Dışkı ve İdrar: Normal miktar ve görünümde."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı testleri", "retikulum ağrı", "pinch"],
-                "content": "Sopa testi: Negatif (-) | Kama testi: Negatif (-) | Withers pinch testi: Negatif (-)."
+            "VITAL_BULGULAR": {
+                "name": "Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "dolum", "dehidrasyon", "ödem"],
+                "content": "Vücut Sıcaklığı: 38.6 °C | Kalp Frekansı: 96 atım/dk | Solunum Frekansı: 46 nefes/dk | Mukoza: Pembe | CRT: 1.8 saniye | Dehidrasyon: %0 | Göz Küresi: Çöküklük yok | Gerdanda geniş alana yayılmış soğuk hamur ödem | Vena jugularis dolgun."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp sesleri", "oskültasyon", "üfürüm", "şılpırtı", "splashing", "boğuk", "akciğer sesleri"],
-                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri, üfürüm yok. Akciğer Oskültasyonu: Hafifletilmiş veziküler sesler."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer"],
+                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri duyulmaktadır. Üfürüm veya su çalkantı sesi YOKTUR. Akciğer oskültasyonu hafiflemiş veziküler sestir."
             },
-            "GLUTARALDEHIT": {
-                "name": "Glutaraldehit Testi",
-                "keywords": ["glutaraldehit", "pıhtılaşma süresi"],
-                "content": "Glutaraldehit Testi: 12 dakikadan uzun (Negatif / Pıhtılaşma yok)"
+            "AGRI_TESTLERI": {
+                "name": "Retikulum Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
+                "content": "Retikulum ağrı testlerinin tamamı NEGATİF."
+            },
+            "DEDEKTOR_MUAYENESI": {
+                "name": "Metal Dedektör / Ferroskop Muayenesi",
+                "keywords": ["dedektör", "dedektor", "metal", "ferroskop", "hauptner", "mıknatıs", "yabancı cisim"],
+                "content": "Metal Dedektör (Ferroskop) Muayenesi: Negatif (-), metalik sinyal alınmadı."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "cbc", "lökosit", "wbc", "kan sayımı", "fibrinojen", "pcv", "hematokrit", "eritrosit", "rbc", "pp/f"],
-                "content": "Eritrosit (RBC): 10.8 x10⁶/µL | Hemoglobin (Hb): 17.2 g/dL | Hematokrit (PCV): %54 | Lökosit (WBC): 7.2 x10³/µL | Plazma Fibrinojeni: 320 mg/dL | Total Protein: 7.3 g/dL | PP/F Oranı: 22.8 | Nötrofil: %36 | Lenfosit: %58."
+                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "kan sayımı", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "nötrofil", "lenfosit", "monosit", "rdw", "mcv", "mch", "mchc", "plt", "trombosit", "eozinofil", "bazofil", "cbc"],
+                "content": "Lökosit (WBC): 7.2 x10³/µL | Eritrosit (RBC): 10.8 x10⁶/µL | Hemoglobin (Hb): 17.2 g/dL | Hematokrit (PCV): %54 | MCV: 50.0 fL | MCH: 15.9 pg | MCHC: 31.8 g/dL | RDW: %18.1 | Nötrofil: %54 | Lenfosit: %38 | Monosit: %5 | Eozinofil: %2 | Bazofil: %1 | Trombosit (PLT): 290 x10³/µL | Plazma Fibrinojeni: 320 mg/dL | Total Protein: 7.3 g/dL | PP/F Oranı: 22.8."
             },
-            "ALT": {"name": "ALT (Alanin Aminotransferaz)", "keywords": ["alt"], "content": "ALT: 18 U/L"},
-            "AST": {"name": "AST (Aspartat Aminotransferaz)", "keywords": ["ast"], "content": "AST: 68 U/L"},
-            "GGT": {"name": "GGT (Gama Glutamil Transferaz)", "keywords": ["ggt"], "content": "GGT: 18 U/L"},
-            "ALP": {"name": "ALP (Alkalen Fosfataz)", "keywords": ["alp"], "content": "ALP: 62 U/L"},
-            "CK": {"name": "CK (Kreatin Kinaz)", "keywords": ["ck"], "content": "CK: 110 U/L"},
-            "LDH": {"name": "LDH (Laktat Dehidrogenaz)", "keywords": ["ldh"], "content": "LDH: 280 U/L"},
-            "BUN": {"name": "BUN (Kan Üre Azotu)", "keywords": ["bun", "üre"], "content": "BUN: 18 mg/dL"},
-            "KREATININ": {"name": "Kreatinin", "keywords": ["kreatinin"], "content": "Kreatinin: 0.9 mg/dL"},
-            "TROPONIN": {"name": "Kardiyak Troponin I", "keywords": ["troponin"], "content": "Kardiyak Troponin I (cTnI): 0.12 ng/mL"},
-            "ALBUMIN": {"name": "Albümin", "keywords": ["albümin", "albumin"], "content": "Albümin: 3.2 g/dL"},
-            "GLOBULIN": {"name": "Globülin", "keywords": ["globülin", "globulin"], "content": "Globülin: 4.1 g/dL"},
-            "BILIRUBIN": {"name": "Bilirubin", "keywords": ["bilirubin"], "content": "Total Bilirubin: 0.3 mg/dL | İndirekt Bilirubin: 0.2 mg/dL"},
-            "GLIKOZ": {"name": "Glikoz", "keywords": ["glikoz", "seker"], "content": "Glikoz: 74 mg/dL"},
+            "BIYOKIMYA_ALT": {
+                "name": "ALT (Alanin Aminotransferaz)",
+                "keywords": ["alt"],
+                "content": "ALT: 18 U/L"
+            },
+            "BIYOKIMYA_AST": {
+                "name": "AST (Aspartat Aminotransferaz)",
+                "keywords": ["ast"],
+                "content": "AST: 68 U/L"
+            },
+            "BIYOKIMYA_GGT": {
+                "name": "GGT (Gama Glutamil Transferaz)",
+                "keywords": ["ggt"],
+                "content": "GGT: 18 U/L"
+            },
+            "BIYOKIMYA_BUN": {
+                "name": "BUN (Kan Üre Azotu)",
+                "keywords": ["bun", "üre", "ure"],
+                "content": "BUN: 18 mg/dL"
+            },
+            "BIYOKIMYA_KREATININ": {
+                "name": "Kreatinin",
+                "keywords": ["kreatinin"],
+                "content": "Kreatinin: 0.9 mg/dL"
+            },
+            "BIYOKIMYA_TROPONIN": {
+                "name": "Kardiyak Troponin I (cTnI)",
+                "keywords": ["troponin", "ctni"],
+                "content": "Kardiyak Troponin I: 0.12 ng/mL"
+            },
+            "BIYOKIMYA_ALBUMIN": {
+                "name": "Serum Albümin (ALB)",
+                "keywords": ["albümin", "albumin", "alb"],
+                "content": "Serum Albümin (ALB): 3.2 g/dL"
+            },
+            "BIYOKIMYA_GLOBULIN": {
+                "name": "Serum Globülin",
+                "keywords": ["globülin", "globulin"],
+                "content": "Serum Globülin: 4.1 g/dL"
+            },
+            "BIYOKIMYA_TP": {
+                "name": "Serum Total Protein (TP)",
+                "keywords": ["total protein", "tp"],
+                "content": "Serum Total Protein (TP): 7.3 g/dL"
+            },
+            "GLUTERALDEHIT": {
+                "name": "Glutaraldehit Pıhtılaşma Testi",
+                "keywords": ["glutaraldehit", "gluteraldehit", "pıhtılaşma"],
+                "content": "Glutaraldehit Pıhtılaşma Testi: 12 dakikada pıhtılaşma yok (Negatif)."
+            },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "laktat"],
-                "content": "Kan pH: 7.36 | pO₂: 48 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı: -0.8 mmol/L | Laktat: 1.5 mmol/L"
-            },
-            "ULTRASON": {
-                "name": "Ultrasonografi (USG)",
-                "keywords": ["ultrason", "usg"],
-                "content": "Ultrasonografi: Sağ ventrikül serbest duvarında kalınlaşma, pulmoner arter çapında genişleme."
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat", "oksijen", "hipoksi"],
+                "content": "Kan pH: 7.36 | Kısmi Oksijen Basıncı (pO₂): 48 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı: -0.8 mmol/L | Laktat: 1.5 mmol/L."
             },
             "EKOKARDIYOGRAFI": {
-                "name": "Ekokardiyografi",
-                "keywords": ["ekokardiyografi", "eko"],
-                "content": "Ekokardiyografi: Sağ ventrikül serbest duvar kalınlaşması."
-            },
-            "PERIKARDIYOSENTEZ": {
-                "name": "Perikardiyosentez",
-                "keywords": ["perikardiyosentez", "ponksiyon", "delme"],
-                "content": "Perikardiyosentez: Seröz berrak sıvı. Protein: 1.2 g/dL."
+                "name": "Ekokardiyografi Bulguları",
+                "keywords": ["ekokardiyografi", "eko", "pulmoner", "ventrikül"],
+                "content": "Ekokardiyografi: Sağ ventrikül serbest duvar kalınlığında artış (Sağ Ventrikül Hipertrofisi), pulmoner arter çapında genişleme."
             },
             "KULTUR": {
                 "name": "Mikrobiyolojik Kültür",
-                "keywords": ["kültür", "bakteri", "mikrobiyoloji"],
-                "content": "Kan ve Sıvı Kültürü: Üreme yok (Steril)."
+                "keywords": ["kültür", "bakteri"],
+                "content": "Kültür: Kan ve perikard sıvısında bakteri üremesi YOKTUR (Steril)."
             }
         }
     },
@@ -449,121 +426,108 @@ CASES = {
         "categories": {
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "besi"],
-                "content": "Günlük rasyonda: 10 kg mısır kırması, 10 kg arpa kırması, 5 kg yonca kuru otu ve 2 kg saman verilmektedir."
+                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "besi", "kaba", "nişasta"],
+                "content": "Günlük rasyonda: 10 kg mısır kırması, 10 kg arpa kırması, 5 kg yonca kuru otu, 2 kg saman verilmektedir. Yoğun yem oranı %80 seviyesindedir."
             },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
                 "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya"],
-                "content": "Ceyhan Ovası (rakım ~50 metre). Sabit besi tesisi, rakım/yayla nakil öyküsü yok."
+                "content": "Besi padoğunda barındırılmaktadır. Rakım değişikliği yoktur."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Anamnez",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "asidoz", "timpani"],
-                "content": "Geçmişinde tekrarlayan akut/subakut rumen asidozu ve hafif timpani öyküsü vardır."
+                "name": "Geçmiş Hastalık & Geçmiş Öykü",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce", "asidoz", "şişkinlik", "timpani", "rumenitis"],
+                "content": "Geçmişinde tekrarlayan akut/subakut rumen asidozu (yem çarpması) ve kronik hafif rumen timpani (şişkinlik) öyküsü vardır."
             },
-            "DEHIDRASYON": {
-                "name": "Dehidrasyon & Deri Turgoru",
-                "keywords": ["dehidrasyon", "deri kıvrımı", "deri turgoru", "göz çöküklüğü", "turgor"],
-                "content": "Dehidrasyon: %7 | Deri kıvrım kalıcılık süresi: 7 saniye | Göz küresi çöküklüğü: 4 mm."
-            },
-            "ATES": {
-                "name": "Vücut Sıcaklığı (Ateş)",
-                "keywords": ["ateş", "sıcaklık", "derece", "rektal derece", "vücut sıcaklığı"],
-                "content": "Vücut Sıcaklığı (T): 39.2 °C"
-            },
-            "NABIZ": {
-                "name": "Kalp Frekansı (Nabız)",
-                "keywords": ["nabız", "kalp frekansı", "atım"],
-                "content": "Kalp Frekansı (HR): 118 atım/dakika"
-            },
-            "SOLUNUM": {
-                "name": "Solunum Frekansı",
-                "keywords": ["solunum", "solunum frekansı", "nefes"],
-                "content": "Solunum Frekansı (RR): 52 nefes/dakika"
-            },
-            "MUKOZA_CRT": {
-                "name": "Mukoza & CRT",
-                "keywords": ["mukoza", "crt", "kılcal damar", "dolum süresi"],
-                "content": "Mukoza: Bembeyaz (soluk) | CRT: 4.0 saniye"
-            },
-            "LENF_NODLARI": {
-                "name": "Yüzeysel Lenf Yumruları",
-                "keywords": ["lenf", "lenf nodu", "lenf yumrusu", "lnn", "prescapularis", "submandibularis", "prefemoralis"],
-                "content": "Tüm yüzeysel lenf düğümleri simetrik, normal büyüklükte ve ağrısız."
-            },
-            "RUMEN_ISTAH": {
-                "name": "Rumen Motilitesi & İştah & Geviş",
-                "keywords": ["rumen", "motilite", "iştah", "geviş", "ruminasyon", "kontraksiyon"],
-                "content": "Rumen hareketi: 5 dakikada 1 kez | İştah: Anoreksik | Geviş getirme: Yok."
-            },
-            "POSTUR_MIZAC": {
-                "name": "Postür & Mizaç & Duruş",
-                "keywords": ["postür", "duruş", "mizaç", "kambur", "durgunluk"],
-                "content": "Duruş: Baş aşağıda, düşkün mizaç, halsizlik."
-            },
-            "ODEM_JUGULARIS": {
-                "name": "Ödem & Vena Jugularis",
-                "keywords": ["ödem", "gerdan", "submandibuler", "jugularis", "staz", "boyun damarı"],
-                "content": "Ödem yok | Vena jugularis hafif dolgun, nabız yok."
-            },
-            "DISKI_IDRAR": {
-                "name": "Dışkı ve İdrar Muayenesi",
-                "keywords": ["dışkı", "idrar", "gaita", "melena"],
-                "content": "Dışkı: Siyah, katran kıvamında (melena). İdrar: Normal görünümde."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı testleri", "retikulum ağrı", "pinch"],
-                "content": "Sopa testi: Negatif (-) | Kama testi: Negatif (-) | Withers pinch testi: Negatif (-)."
+            "VITAL_BULGULAR": {
+                "name": "Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "dolum", "kan", "hemoptizi", "melena", "dışkı", "dehidrasyon"],
+                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 118 atım/dk | Solunum Frekansı: 52 nefes/dk | Ağız/Burun: Köpüklü taze parlak kırmızı kan fışkırması (Hemoptizi) | Mukozalar: Bembeyaz | CRT: 4.0 saniye | Dehidrasyon: %8 | Göz Küresi: Belirgin çökmüş | Dışkı: Siyah katran kıvamında (Melena)."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp sesleri", "oskültasyon", "üfürüm", "şılpırtı", "splashing", "boğuk", "akciğer sesleri"],
-                "content": "Kalp Oskültasyonu: Taşikardik zayıf düştü sesleri. Akciğer Oskültasyonu: Bilateral yaygın kaba raller ve hışırtı sesleri."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer"],
+                "content": "Kalp Oskültasyonu: Taşikardik, zayıf düştü sesleri. Akciğer Oskültasyonu: Bilateral yaygın kaba raller ve hışırtı sesleri duyuluyor."
             },
-            "GLUTARALDEHIT": {
-                "name": "Glutaraldehit Testi",
-                "keywords": ["glutaraldehit", "pıhtılaşma süresi"],
-                "content": "Glutaraldehit Testi: 3.5 dakikada pıhtılaşma (Pozitif)"
+            "AGRI_TESTLERI": {
+                "name": "Retikulum Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
+                "content": "Retikulum ağrı testleri NEGATİF."
+            },
+            "DEDEKTOR_MUAYENESI": {
+                "name": "Metal Dedektör / Ferroskop Muayenesi",
+                "keywords": ["dedektör", "dedektor", "metal", "ferroskop", "hauptner", "mıknatıs", "yabancı cisim"],
+                "content": "Metal Dedektör (Ferroskop) Muayenesi: Negatif (-), metalik sinyal alınmadı."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "cbc", "lökosit", "wbc", "kan sayımı", "fibrinojen", "pcv", "hematokrit", "eritrosit", "rbc", "pp/f"],
-                "content": "Eritrosit (RBC): 2.1 x10⁶/µL | Hemoglobin (Hb): 4.2 g/dL | Hematokrit (PCV): %12 | Lökosit (WBC): 21.5 x10³/µL | Plazma Fibrinojeni: 1050 mg/dL | Total Protein: 7.6 g/dL | PP/F Oranı: 7.23 | Nötrofil: %78 | Lenfosit: %18."
+                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "kan sayımı", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "nötrofil", "lenfosit", "monosit", "rdw", "mcv", "mch", "mchc", "plt", "trombosit", "eozinofil", "bazofil", "cbc"],
+                "content": "Lökosit (WBC): 21.5 x10³/µL | Eritrosit (RBC): 2.1 x10⁶/µL | Hemoglobin (Hb): 4.2 g/dL | Hematokrit (PCV): %12 | MCV: 57.1 fL | MCH: 20.0 pg | MCHC: 35.0 g/dL | RDW: %19.8 | Nötrofil: %70 | Lenfosit: %20 | Monosit: %6 | Eozinofil: %3 | Bazofil: %1 | Trombosit (PLT): 110 x10³/µL | Plazma Fibrinojeni: 1050 mg/dL | Total Protein: 7.6 g/dL | PP/F: 7.23."
             },
-            "ALT": {"name": "ALT (Alanin Aminotransferaz)", "keywords": ["alt"], "content": "ALT: 45 U/L"},
-            "AST": {"name": "AST (Aspartat Aminotransferaz)", "keywords": ["ast"], "content": "AST: 210 U/L"},
-            "GGT": {"name": "GGT (Gama Glutamil Transferaz)", "keywords": ["ggt"], "content": "GGT: 68 U/L"},
-            "ALP": {"name": "ALP (Alkalen Fosfataz)", "keywords": ["alp"], "content": "ALP: 110 U/L"},
-            "CK": {"name": "CK (Kreatin Kinaz)", "keywords": ["ck"], "content": "CK: 190 U/L"},
-            "LDH": {"name": "LDH (Laktat Dehidrogenaz)", "keywords": ["ldh"], "content": "LDH: 410 U/L"},
-            "BUN": {"name": "BUN (Kan Üre Azotu)", "keywords": ["bun", "üre"], "content": "BUN: 42 mg/dL"},
-            "KREATININ": {"name": "Kreatinin", "keywords": ["kreatinin"], "content": "Kreatinin: 1.6 mg/dL"},
-            "TROPONIN": {"name": "Kardiyak Troponin I", "keywords": ["troponin"], "content": "Kardiyak Troponin I (cTnI): 0.45 ng/mL"},
-            "ALBUMIN": {"name": "Albümin", "keywords": ["albümin", "albumin"], "content": "Albümin: 2.6 g/dL"},
-            "GLOBULIN": {"name": "Globülin", "keywords": ["globülin", "globulin"], "content": "Globülin: 5.0 g/dL"},
-            "BILIRUBIN": {"name": "Bilirubin", "keywords": ["bilirubin"], "content": "Total Bilirubin: 1.2 mg/dL | İndirekt Bilirubin: 0.8 mg/dL"},
-            "GLIKOZ": {"name": "Glikoz", "keywords": ["glikoz", "seker"], "content": "Glikoz: 88 mg/dL"},
+            "BIYOKIMYA_ALT": {
+                "name": "ALT (Alanin Aminotransferaz)",
+                "keywords": ["alt"],
+                "content": "ALT: 32 U/L"
+            },
+            "BIYOKIMYA_AST": {
+                "name": "AST (Aspartat Aminotransferaz)",
+                "keywords": ["ast"],
+                "content": "AST: 210 U/L"
+            },
+            "BIYOKIMYA_GGT": {
+                "name": "GGT (Gama Glutamil Transferaz)",
+                "keywords": ["ggt"],
+                "content": "GGT: 68 U/L"
+            },
+            "BIYOKIMYA_BUN": {
+                "name": "BUN (Kan Üre Azotu)",
+                "keywords": ["bun", "üre", "ure"],
+                "content": "BUN: 42 mg/dL"
+            },
+            "BIYOKIMYA_KREATININ": {
+                "name": "Kreatinin",
+                "keywords": ["kreatinin"],
+                "content": "Kreatinin: 1.6 mg/dL"
+            },
+            "BIYOKIMYA_BILIRUBIN": {
+                "name": "Bilirubin",
+                "keywords": ["bilirubin"],
+                "content": "Total Bilirubin: 1.2 mg/dL | İndirekt Bilirubin: 0.8 mg/dL"
+            },
+            "BIYOKIMYA_GLIKOZ": {
+                "name": "Glikoz",
+                "keywords": ["glikoz", "seker"],
+                "content": "Glikoz: 88 mg/dL"
+            },
+            "BIYOKIMYA_ALBUMIN": {
+                "name": "Serum Albümin (ALB)",
+                "keywords": ["albümin", "albumin", "alb"],
+                "content": "Serum Albümin (ALB): 2.5 g/dL"
+            },
+            "BIYOKIMYA_GLOBULIN": {
+                "name": "Serum Globülin",
+                "keywords": ["globülin", "globulin"],
+                "content": "Serum Globülin: 5.1 g/dL"
+            },
+            "BIYOKIMYA_TP": {
+                "name": "Serum Total Protein (TP)",
+                "keywords": ["total protein", "tp"],
+                "content": "Serum Total Protein (TP): 7.6 g/dL"
+            },
+            "GLUTERALDEHIT": {
+                "name": "Glutaraldehit Pıhtılaşma Testi",
+                "keywords": ["glutaraldehit", "gluteraldehit", "pıhtılaşma"],
+                "content": "Glutaraldehit Pıhtılaşma Testi: 3.5 dakikada pıhtılaşma (Pozitif)."
+            },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "laktat"],
-                "content": "Kan pH: 7.24 | pO₂: 52 mmHg | pCO₂: 50 mmHg | HCO₃⁻: 18.5 mmol/L | Baz Açığı: -6.2 mmol/L | Laktat: 4.2 mmol/L"
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
+                "content": "Kan pH: 7.24 | pO₂: 52 mmHg | pCO₂: 50 mmHg | HCO₃⁻: 18.5 mmol/L | Baz Açığı (BE): -6.2 mmol/L | Laktat: 4.2 mmol/L."
             },
             "ULTRASON": {
-                "name": "Ultrasonografi (USG)",
-                "keywords": ["ultrason", "usg"],
-                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde 6 cm çapında kılıflı apse odağı, Vena Cava Caudalis lümeninde tıkayıcı trombüs ekojenitesi. Torakal USG: Pulmoner arter çevresinde hematom ve anevrizma alanları."
-            },
-            "PERIKARDIYOSENTEZ": {
-                "name": "Perikardiyosentez",
-                "keywords": ["perikardiyosentez", "ponksiyon", "delme"],
-                "content": "Perikardiyosentez: Uygulanmadı / Sıvı birikimi yok."
-            },
-            "KULTUR": {
-                "name": "Mikrobiyolojik Kültür",
-                "keywords": ["kültür", "bakteri", "mikrobiyoloji"],
-                "content": "Kan Kültürü: Üreme yok."
+                "name": "Ultrasonografi (USG) Bulguları",
+                "keywords": ["ultrason", "usg", "karaciğer", "apse", "vena cava", "trombüs"],
+                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde 6 cm çapında kılıflı apse odağı (Hepatic Abscess), Vena Cava Caudalis lümeninde tıkayıcı trombüs ekojenitesi. Torakal USG: Pulmoner arter çevresinde hematom ve anevrizma alanları."
             }
         }
     }
@@ -571,7 +535,7 @@ CASES = {
 
 # Header UI
 st.markdown("<h1 class='main-title'>🐄 VET401 İç Hastalıkları I</h1>", unsafe_allow_html=True)
-st.markdown("<h3 class='sub-title'>Akıllı Anamnezi & Bulgu Sorgulama Konsolu</h3>", unsafe_allow_html=True)
+st.markdown("<h3 class='sub-title'>Akıllı Anamnezi & Bulgu Sorgulama Konsolu (Serbest Metin Sorgulama)</h3>", unsafe_allow_html=True)
 
 # Select Case
 selected_case_name = st.selectbox(
@@ -585,14 +549,16 @@ active_case = CASES[selected_case_name]
 st.markdown(f"<div class='vaka-header'>📋 {selected_case_name} — İlk Başvuru Şikayeti</div>", unsafe_allow_html=True)
 st.info(f"**Hastanın Başvuru Şikayeti:** {active_case['sikayet']}")
 
-# Session State for History
+# Session State for Questions History
 if "history" not in st.session_state:
     st.session_state.history = {}
 
 if selected_case_name not in st.session_state.history:
     st.session_state.history[selected_case_name] = []
 
-# Exact Word Boundary Query Matcher
+# Question Input Section
+st.markdown("### 💬 Sorunuzu veya İncelemek İstediğiniz Muayeneyi Yazınız:")
+
 def match_query(user_text, categories_dict):
     text_clean = user_text.lower().strip()
     text_clean = text_clean.replace("ı", "i").replace("ğ", "g").replace("ü", "u").replace("ş", "s").replace("ö", "o").replace("ç", "c")
@@ -602,8 +568,7 @@ def match_query(user_text, categories_dict):
     for cat_key, cat_info in categories_dict.items():
         for kw in cat_info["keywords"]:
             kw_clean = kw.lower().replace("ı", "i").replace("ğ", "g").replace("ü", "u").replace("ş", "s").replace("ö", "o").replace("ç", "c")
-            pattern = r'\b' + re.escape(kw_clean) + r'\b'
-            if re.search(pattern, text_clean):
+            if re.search(r'\b' + re.escape(kw_clean) + r'\b', text_clean) or kw_clean in text_clean:
                 matched_cats.append(cat_key)
                 break
                 
@@ -613,9 +578,9 @@ col_input, col_button = st.columns([4, 1])
 
 with col_input:
     user_query = st.text_input(
-        "Sorunuzu Buraya Yazınız (Örn: Rasyon?, Ateş?, ALT?, AST?):",
+        "Sorunuzu Buraya Yazınız (Örn: Rasyon?, Ateş?, ALT?, Monosit?, Dedektör?):",
         key="query_input",
-        placeholder="Örn: Rasyon?, Ateş?, Dehidrasyon?, Hemogram?, ALT?..."
+        placeholder="Örn: Rasyon?, Ateş?, Hemogram?, Dedektör?, ALT?..."
     )
 
 with col_button:
@@ -629,6 +594,7 @@ if submit_btn and user_query:
         new_discoveries = 0
         for cat_key in matches:
             cat_data = active_case["categories"][cat_key]
+            # Check if already in history
             already_in = any(item["cat_key"] == cat_key for item in st.session_state.history[selected_case_name])
             if not already_in:
                 st.session_state.history[selected_case_name].append({
@@ -640,13 +606,13 @@ if submit_btn and user_query:
                 new_discoveries += 1
         
         if new_discoveries > 0:
-            st.success(f"🎉 {new_discoveries} yeni klinik bulgu / bilgi açığa çıkarıldı!")
+            st.success(f"🎉 Teşekkürler! Sorunuzla ilişkili {new_discoveries} yeni klinik bulgu / bilgi açığa çıkarıldı!")
         else:
-            st.info("Bu bilgi zaten açığa çıkarılmıştı. Aşağıdaki listeden okuyabilirsiniz.")
+            st.info("Bu soruyla ilgili bilgi zaten daha önce açığa çıkarılmıştı. Aşağıdaki keşifler listenizden okuyabilirsiniz.")
     else:
-        st.warning("⚠️ Eşleşen bir bilgi bulunamadı. Lütfen aradığınız kelimeyi doğrudan yazınız (Örn: 'Rasyon', 'Ateş', 'Dehidrasyon', 'Hemogram', 'ALT').")
+        st.warning("⚠️ Girdiğiniz soru veya kelimelerle eşleşen bir bilgi bulunamadı. Lütfen sorunuzu farklı anahtar kelimelerle yazınız (Örn: 'rasyon', 'rakım', 'ateş', 'kalp sesleri', 'hemogram', 'dedektör', 'alt').")
 
-# Display Discovered Items
+# Display Discovered Information
 st.markdown("---")
 st.markdown(f"### 📂 Keşfedilen Klinik İpuçları ve Muayene Bulguları ({len(st.session_state.history[selected_case_name])} Bilgi Açıldı)")
 
@@ -662,7 +628,7 @@ if st.session_state.history[selected_case_name]:
             </div>
         """, unsafe_allow_html=True)
 else:
-    st.info("Henüz bu vaka için soru sormadınız. Arama kutusuna merak ettiğiniz kelimeyi yazarak muayeneye başlayınız.")
+    st.info("Henüz bu vaka için soru sormadınız. Yukarıdaki arama kutusuna merak ettiğiniz soruyu yazarak muayeneye başlayınız.")
 
 # Reset History Button
 if st.session_state.history[selected_case_name]:
