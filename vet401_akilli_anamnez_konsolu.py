@@ -1,5 +1,6 @@
 import streamlit as st
 import re
+import os
 
 # Page Config
 st.set_page_config(
@@ -8,7 +9,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# Custom CSS Styling
+# Styling
 st.markdown("""
     <style>
     .main-title {
@@ -33,15 +34,7 @@ st.markdown("""
         border-radius: 8px;
         font-size: 18px;
         font-weight: bold;
-        margin-bottom: 12px;
-    }
-    .klinik-gorsel-box {
-        background-color: #FFF9E6;
-        border: 2px solid #FFE082;
-        border-left: 6px solid #FFB300;
-        padding: 14px 18px;
-        border-radius: 8px;
-        margin-bottom: 18px;
+        margin-bottom: 15px;
     }
     .card-found {
         background-color: #F2F4F8;
@@ -73,679 +66,555 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cases Knowledge Base (12 Cases)
+# Smart Image Resolution Function (Linux / Case-Insensitive / Format Agnostic)
+def find_gorsel_path(base_file_path):
+    if not base_file_path:
+        return None
+    clean_name = os.path.basename(base_file_path)
+    clean_stem = os.path.splitext(clean_name)[0].lower()
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    search_dirs = [
+        os.path.join(script_dir, "gorseller"),
+        os.path.join(os.getcwd(), "gorseller"),
+        script_dir,
+        os.getcwd()
+    ]
+    
+    extensions = [".jpg", ".jpeg", ".png", ".webp", ".JPG", ".JPEG", ".PNG"]
+    
+    for s_dir in search_dirs:
+        if not os.path.exists(s_dir):
+            continue
+        # 1. Direct extension match
+        for ext in extensions:
+            candidate = os.path.join(s_dir, f"{clean_stem}{ext}")
+            if os.path.isfile(candidate):
+                return candidate
+        # 2. Case-insensitive / stem match scan
+        try:
+            for item in os.listdir(s_dir):
+                item_stem = os.path.splitext(item)[0].lower()
+                clean_stem_no_underscore = clean_stem.replace("_", "").replace("-", "")
+                item_stem_no_underscore = item_stem.replace("_", "").replace("-", "")
+                if item_stem == clean_stem or item_stem_no_underscore == clean_stem_no_underscore:
+                    return os.path.join(s_dir, item)
+        except Exception:
+            pass
+    return None
+
+# Cases Knowledge Base
 CASES = {
     "Vaka A (Papatya)": {
         "kod": "VAKA_A",
-        "sikayet": "Hocam, Papatya isimli ineğimiz 3 gündür yemden kesildi, sütü bıçak gibi kesildi. Gerdanının altı ve çenesinin altı hamur gibi şişti, dokununca soğuk. Hayvan sürekli duruyor, kamburunu çıkarıp inliyor, yürütmek isteyince hiç oralı olmuyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Gerdan ve çene altında soğuk ödem, iştahsızlık, belirgin süt verimi düşüşü ve durgunluk.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 540 kg | Yaş: 4.5 Yaşında | Irk: Siyah Alaca (Holstein) Süt İneği."
-            },
-            "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "iştahsızlık", "anoreksi", "su içiyor mu", "yem"],
-                "content": "Şiddetli Anoreksi (Tam iştahsızlık). Hayvan kaba ve kesif yeme dokunmamaktadır, Rumen atozik durumdadır."
-            },
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "balya", "saman", "kaba", "tel", "çivi"],
-                "content": "Günlük rasyonda mısır silajı, yonca otu ve fabrika yemi verilmektedir. Balya tel ve inşaat çivisi atıklarının kaba yeme karışmış olabileceği belirtilmektedir."
+                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "balya", "saman", "kaba", "tel", "çivi", "yabancı"],
+                "content": "İşletmede entansif kaba/yoğun yem karma rasyonu uygulanmaktadır. Balya parçalama esnasında kaba yeme inşaat tellerinin ve çivilerin karışmış olabileceği belirtilmektedir."
+            },
+            "ISTAH_DURUMU": {
+                "name": "İştah ve Yem Tüketimi Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "anoreksi", "iştahsızlık", "yem tüketimi"],
+                "content": "Ağır iştahsızlık (Anoreksi) mevcuttur. Hayvan önüne konulan kesif ve kaba yeme dokunmamaktadır."
             },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "ova"],
-                "content": "Ceyhan Ovası rakım ~50m sabit besi ve süt tesisinde doğup büyümüştür. Yayla sevk öyküsü yoktur."
+                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik"],
+                "content": "Hayvan Ceyhan ovasındaki (rakım ~50 metre) sabit tesiste doğup büyümüştür. Yüksek rakım nakli yoktur."
             },
             "GECMIS_HASTALIK": {
                 "name": "Geçmiş Hastalık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü"],
-                "content": "Geçmişinde kronik metritis veya mastitis yoktur. 2 ay önce sorunsuz doğum yapmıştır."
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "mastitis", "öykü"],
+                "content": "Geçmişinde kaydedilmiş kronik hastalık öyküsü yoktur. 2 ay önce sorunsuz doğum yapmıştır."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "ödem", "vital"],
-                "content": "Vücut Sıcaklığı: 39.8 °C | Kalp Frekansı: 102 atım/dk | Solunum Frekansı: 42 nefes/dk | Mukoza: Soluk pembe | CRT: 2.5 saniye | Gerdan ve submandibuler bölgede soğuk hamur ödem | Vena jugularis stazı +, yalancı jugular nabız +."
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "dehidrasyon", "ödem"],
+                "content": "Vücut Sıcaklığı: 39.8 °C | Kalp Frekansı: 102 atım/dk | Solunum Frekansı: 42 nefes/dk | Mukoza: Soluk pembe | CRT: 2.5 sn | Dehidrasyon: %6 | Gerdan ve submandibuler ödem +, Vena jugularis stazı +."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer"],
-                "content": "Kalp Oskültasyonu: Gaz ve pürülan sıvının çalkalanmasına bağlı çamaşır makinesi / su şılpırtısı (splashing) sesi ve boğuk kalp sesleri duyuluyor. Akciğer: Ventro-lateral alanlarda solunum sesleri hafif azalmış."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "splashing", "muffled", "boğuk", "rall"],
+                "content": "Kalp Oskültasyonu: Su çalkantı / şılpırtı (splashing) ve boğuk kalp sesleri. Akciğer Oskültasyonu: Ventro-lateral alanlarda solunum sesleri azalmış."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri & Dedektör",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "dedektör", "metal", "mıknatıs"],
-                "content": "Sopa testi, kama testi ve Withers pinch ağrı testlerinin tamamı Pozitif (+). Hayvan sırtını kamburlaştırıp inlemektedir. Ferroskop/Dedektör: Retikulum üzerinde Pozitif (+) metalik sinyal reaksiyonu."
+                "name": "Retikulum Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
+                "content": "Sopa, kama ve Withers pinch retikulum ağrı testlerinin tamamı POZİTİF (+)."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f"],
-                "content": "Lökosit (WBC): 22.4 x10³/µL | Eritrosit (RBC): 5.4 x10⁶/µL | PCV: %28 | Plazma Fibrinojeni: 1250 mg/dL (Aşırı yüksek yangı) | PP/F Oranı: 6.3 (Ağır aktif Fibrinöz Yangı Eşiği)."
+                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "rbc", "pcv", "pp/f"],
+                "content": "Eritrosit (RBC): 5.1 x10⁶/µL | Lökosit (WBC): 18.2 x10³/µL (Rejeneratif Sola Kayma) | Fibrinojen: 1250 mg/dL (Aşırı Yüksek) | PP/F Oranı: 6.3 (Suppüratif Yangı)."
             },
             "BIYOKIMYA": {
                 "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh", "üre", "bun", "kreatinin", "bilirubin", "albümin", "globülin", "troponin"],
-                "content": "Total Protein: 7.9 g/dL | Albümin: 2.4 g/dL | Globülin: 5.5 g/dL | AST: 118 U/L | GGT: 24 U/L | BUN: 28 mg/dL | Kreatinin: 1.2 mg/dL | Kardiyak Troponin I (cTnI): 0.85 ng/mL (Perikard/miyokard hasarı)."
+                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh", "üre", "bun", "kreatinin", "troponin"],
+                "content": "AST: 185 U/L | GGT: 42 U/L | BUN: 32 mg/dL | Kardiyak Troponin I: 2.8 ng/mL (Yüksek - Miyokard Hasarı)."
             },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.32 | pO₂: 72 mmHg | pCO₂: 48 mmHg | HCO₃⁻: 20.2 mmol/L | Baz Açığı (BE): -4.1 mmol/L | Laktat: 2.8 mmol/L."
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "laktat"],
+                "content": "Kan pH: 7.28 | pO₂: 36 mmHg | pCO₂: 48 mmHg | HCO₃⁻: 17.2 mmol/L | Laktat: 3.8 mmol/L."
             },
             "IDRAR_TAHLILI": {
                 "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "hematüri", "sediment", "idrar tahlili"],
-                "content": "İdrar Dansitesi: 1.022 | pH: 7.8 | Protein: Trace (+) | Keton: Negatif | Glikoz: Negatif | Bilirubin: Negatif | Sediment: Nadir yassı epitel hücreleri, lökosit/eritrosit yok."
+                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "mikrohematüri", "sediment"],
+                "content": "Spesifik Gravite: 1.022 | pH: 7.5 | Proteinüri: (+) Hafif | Glikoz: Negatif | Lökosit/Eritrosit: Nadir lökosit izlendi."
             },
             "GORUNTULEME_PONKSIYON": {
-                "name": "Ultrason, Perikardiyosentez & Kültür",
-                "keywords": ["ultrason", "usg", "perikardiyosentez", "kültür", "bakteri", "ponksiyon", "sıvı"],
-                "content": "USG: Perikardiyal boşlukta fibrin bantları ve 4 cm pürülan sıvı birikimi. Perikardiyosentez: Kirli sarı-yeşil pis kokulu eksuda. Kültür: Trueperella pyogenes üremesi."
+                "name": "Görüntüleme & Perikardiyosentez",
+                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "perikard"],
+                "content": "USG: Perikardiyal kesede 4 cm kalınlığında fibrinli pürülan sıvı birikimi. Perikardiyosentez: Kötü kokulu kirli sarı-yeşil pürülan sıvı. Kültür: Trueperella pyogenes ve anaerob üreme."
             }
         }
     },
-
     "Vaka B (Yonca)": {
         "kod": "VAKA_B",
-        "sikayet": "Hocam, Yonca adındaki süt ineğimiz 3 haftadır bir türlü toparlayamadı. Önce rahim iltihabı geçirdi, sonra memesi şişti. Şimdi de dizleri ve ayak eklemleri bilye gibi şişti, basamıyor. Sürekli yatıyor, ateşi düşmüyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Düzensiz tekrarlayan yüksek ateş, zayıflama, çabuk yorulma ve süt veriminde kronik düşüş.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 580 kg | Yaş: 5 Yaşında | Irk: Siyah Alaca (Holstein)."
-            },
-            "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "iştahsızlık", "anoreksi", "yem"],
-                "content": "Belirgin İştahsızlık (Hiporeksi). Günlük kesif yeminin sadece %20'sini tüketmektedir."
-            },
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "silaj", "ot", "süt yemi"],
-                "content": "Günlük rasyonda: 12 kg mısır silajı, 7 kg yonca otu ve 9 kg süt yemi verilmektedir."
+                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "mısır", "arpa", "ot", "mera", "silaj"],
+                "content": "Standart süt rasyonu verilmektedir. Yem kalitesinde bozukluk veya yabancı cisim öyküsü bulunmamaktadır."
+            },
+            "ISTAH_DURUMU": {
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "hiporeksi"],
+                "content": "İştah dalgalıdır (Hiporeksi). Ateş yükseldiğinde yem yemeyi tamamen kesmekte, ateş düştüğünde az miktarda kaba yem tüketmektedir."
+            },
+            "LOKASYON_RAKIM": {
+                "name": "Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil"],
+                "content": "Ceyhan ovası işletmesidir. Nakil öyküsü yoktur."
             },
             "GECMIS_HASTALIK": {
                 "name": "Geçmiş Hastalık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü"],
-                "content": "Yaklaşık 3 hafta önce doğum sonrası klinik metritis (rahim iltihabı) ve mastitis tedavisi görmüştür (Bakteriyemi kaynağı)."
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme"],
+                "content": "3 ay önce doğum sonrası kronik purulent metritis (rahim iltihabı) tedavisi görmüştür."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "eklem", "topallık", "vital"],
-                "content": "Vücut Sıcaklığı: 40.2 °C (Yüksek Ateş) | Kalp Frekansı: 110 atım/dk | Solunum Frekansı: 38 nefes/dk | Sol carpus ve tarsus eklemlerinde sıcak, şiş, ağrılı septik artrit odakları."
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "peteşi"],
+                "content": "Vücut Sıcaklığı: 40.2 °C (Tekrarlayan Ateş) | Kalp Frekansı: 110 atım/dk | Solunum Frekansı: 38 nefes/dk | Mukoza: Soluk ve konjonktivada peteşiyel kanamalar | CRT: 3.0 sn."
             },
             "KALP_AKCIGER_SESLERI": {
                 "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "boğuk", "triküspid"],
-                "content": "Kalp Oskültasyonu: Triküspid kapak odak sahası üzerinde Grade IV/VI holosistolik üfürüm duyulmaktadır. Su çalkantı sesi YOKTUR."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri & Dedektör",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum", "dedektör"],
-                "content": "Retikulum ağrı testleri (Sopa ve Kama) ve Metal Dedektörü NEGATİF (-)."
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "systolic", "murmur", "endokardit"],
+                "content": "Kalp Oskültasyonu: Sol sistolik odakta (mitral/triküspid kapak) holosistolik yumuşak üfürüm (systolic murmur). Akciğer sesleri normal."
             },
             "HEMOGRAM": {
                 "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "pp/f"],
-                "content": "Lökosit (WBC): 26.8 x10³/µL (Şiddetli lökositoz) | Eritrosit (RBC): 4.2 x10⁶/µL | PCV: %22 | Plazma Fibrinojeni: 980 mg/dL | PP/F Oranı: 8.98."
+                "keywords": ["hemogram", "wbc", "lökosit", "fibrinojen", "rbc", "anemi"],
+                "content": "Eritrosit (RBC): 3.8 x10⁶/µL (Non-rejeneratif Anemi) | Lökosit (WBC): 24.5 x10³/µL (Şiddetli Lökositoz) | Fibrinojen: 980 mg/dL."
             },
             "BIYOKIMYA": {
                 "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin", "troponin"],
-                "content": "Serum Albümin: 2.3 g/dL | Serum Globülin: 6.5 g/dL (Hipergamaglobulinemi) | AST: 145 U/L | BUN: 34 mg/dL | Kardiyak Troponin I: 1.20 ng/mL."
-            },
-            "KAN_GAZI": {
-                "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.30 | pO₂: 68 mmHg | pCO₂: 52 mmHg | HCO₃⁻: 18.8 mmol/L | Baz Açığı: -5.2 mmol/L | Laktat: 3.1 mmol/L."
+                "keywords": ["biyokimya", "ast", "ggt", "bun", "kreatinin", "globülin", "troponin"],
+                "content": "Globülin: 5.8 g/dL (Hipergamaglobulinemi) | AST: 110 U/L | Troponin I: 1.6 ng/mL."
             },
             "IDRAR_TAHLILI": {
                 "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.020 | pH: 7.5 | Protein: (+) | Keton: Negatif | Sediment: Bakteriyemiye bağlı 2-4 lökosit/Saha."
+                "keywords": ["idrar", "dansite", "proteinüri", "mikrohematüri"],
+                "content": "Spesifik Gravite: 1.018 | Mikrohematüri: (++) Pozitif | Proteinüri: (++) Orta derece protein varlığı."
             },
             "GORUNTULEME_PONKSIYON": {
                 "name": "Ekokardiyografi & Kan Kültürü",
-                "keywords": ["ekokardiyografi", "eko", "vejetasyon", "kültür", "bakteri", "kapak"],
-                "content": "Ekokardiyografi: Triküspid kapak üzerinde 3.5 cm çapında pürüzlü hiperekojen kitle (vejetasyon). Kan & Eklem Kültürü: Trueperella pyogenes üremesi."
+                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "vejetasyon", "kapak"],
+                "content": "Ekokardiyografi: Triküspid ve mitral kapak yaprakçıklarında 1.5 cm çapında karnabahar karnı görünümünde hiperekojen vejetasyon kitleleri. Kan Kültürü: Trueperella pyogenes ve Streptococcus bovis pozitif."
             }
         }
     },
-
     "Vaka C (Zümrüt)": {
         "kod": "VAKA_C",
-        "sikayet": "Hocam, Zümrüt adındaki düvemizi 3 hafta önce Ceyhan'dan alıp Doğu Anadolu'daki 1900 metre yüksek yaylamıza çıkardık. Yaylaya çıktığından beri hayvanın göğsünün önü, döşü ve gerdanı torba gibi şişti. Yürütürken çabucak tıkanıyor, yürümek istemiyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Gerdan ödemi, morarmış mukoza (siyanoz), nefes darlığı ve kıl örtüsünde matlaşma.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 460 kg | Yaş: 2 Yaşında Gebe Düve | Irk: Esmer (Simental Melezi)."
-            },
-            "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "mera", "iştahsızlık"],
-                "content": "İştah hafif azalmıştır (Hiporeksi). Otlamaya isteksizdir, çabuk yorulmaktadır."
-            },
             "LOKASYON_RAKIM": {
                 "name": "Lokasyon & Coğrafi Öykü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "dağ", "metre"],
-                "content": "3 hafta önce alçak rakımlı sahil ovasından (Ceyhan ~50m) Doğu Anadolu'daki 1900 metre rakımlı yüksek dağ yaylasına otlatılmak üzere nakledilmiştir (Yüksek Rakım / High Altitude)."
+                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "dağ", "yükseklik"],
+                "content": "Hayvan 2 hafta önce Pozantı Toros Dağları yüksek rakımlı yayla merasından (~2100 metre) nakledilerek gelmiştir."
+            },
+            "ISTAH_DURUMU": {
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Egzersiz ve solunum güçlüğüne bağlı iştahsızlık mevcuttur."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "ödem", "vital"],
-                "content": "Vücut Sıcaklığı: 38.6 °C (NORMAL) | Kalp Frekansı: 96 atım/dk | Solunum Frekansı: 46 nefes/dk | Gerdan ve döş bölgesinde geniş alana yayılmış soğuk hamur ödem | Vena jugularis dolgun."
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "solunum", "mukoza", "siyanoz", "ödem"],
+                "content": "Vücut Sıcaklığı: 38.6 °C (NORMAL) | Kalp Frekansı: 96 atım/dk | Solunum: 46 nefes/dk | Mukozalar: Siyanotik (Morarma) | Gerdan ödemi +, Jugular dolgunluk +."
             },
             "KALP_AKCIGER_SESLERI": {
-                "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "boğuk", "rall", "akciğer"],
-                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri duyulmaktadır. Üfürüm veya su çalkantı sesi YOKTUR."
-            },
-            "AGRI_TESTLERI": {
-                "name": "Retikulum Ağrı Testleri & Dedektör",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum", "dedektör"],
-                "content": "Retikulum ağrı testleri ve Metal Dedektörü NEGATİF (-)."
+                "name": "Kalp Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "üfürüm"],
+                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri. Üfürüm veya su çalkantı sesi YOKTUR."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "polisitemi"],
-                "content": "Eritrosit (RBC): 10.8 x10⁶/µL (Sekonder Polisitemi) | Hemoglobin (Hb): 17.2 g/dL | Hematokrit (PCV): %54 (Aşırı yüksek) | Lökosit (WBC): 7.2 x10³/µL (NORMAL) | Plazma Fibrinojeni: 320 mg/dL (NORMAL) | PP/F Oranı: 22.8."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin", "troponin"],
-                "content": "Albümin: 3.2 g/dL | Globülin: 4.1 g/dL | AST: 68 U/L | GGT: 18 U/L | BUN: 18 mg/dL | Kardiyak Troponin I: 0.12 ng/mL (Normal)."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "rbc", "pcv", "hematokrit", "polisitemi"],
+                "content": "RBC: 10.8 x10⁶/µL | PCV: %54 (Aşırı Yüksek - Sekonder Polisitemi) | WBC: 7.2 x10³/µL (NORMAL) | Fibrinojen: 320 mg/dL (NORMAL)."
             },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat", "oksijen", "hipoksi"],
-                "content": "Kan pH: 7.36 | Kısmi Oksijen Basıncı (pO₂): 48 mmHg (Ağır Doku Hipoksisi / Yüksek Rakım) | pCO₂: 42 mmHg | HCO₃⁻: 23.5 mmol/L | Laktat: 1.5 mmol/L."
+                "keywords": ["kan gazı", "po2", "pco2", "hipoksi"],
+                "content": "Kan pH: 7.36 | pO₂: 48 mmHg (Ağır Doku Hipoksisi) | pCO₂: 42 mmHg."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.025 | pH: 8.0 | Protein: Negatif | Keton: Negatif | Glikoz: Negatif | Sediment: Temiz."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar", "dansite", "proteinüri"],
+                "content": "Spesifik Gravite: 1.025 | pH: 8.0 | Protein/Glikoz: Negatif."
             },
             "GORUNTULEME_PONKSIYON": {
-                "name": "Ekokardiyografi & Kültür",
-                "keywords": ["ekokardiyografi", "eko", "pulmoner", "ventrikül", "kültür"],
-                "content": "Ekokardiyografi: Sağ ventrikül serbest duvar kalınlığında artış (Sağ Ventrikül Hipertrofisi), pulmoner arter çapında genişleme. Kültür: Bakteri üremesi YOKTUR (Steril)."
+                "name": "Ekokardiyografi",
+                "keywords": ["ultrason", "usg", "ekokardiyografi", "sağ ventrikül"],
+                "content": "Ekokardiyografi: Sağ ventrikül serbest duvarında belirgin kalınlaşma (Sağ Ventrikül Hipertrofisi). Kültür: Steril (Üreme yok)."
             }
         }
     },
-
     "Vaka D (Yiğit)": {
         "kod": "VAKA_D",
-        "sikayet": "Hocam, besi padoğundaki Yiğit isimli tosunsun ağzından ve burnundan fışkırır gibi taze kırmızı kan geldi! Yemliği kan kapladı. Dışkısı da zift gibi, katran gibi kapkara çıkıyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Ağız ve burundan fışkırır tarzda taze parlak kırmızı kan gelmesi (hemoptizi) ve siyah katran gibi dışkı yapma.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 620 kg | Yaş: 18 Aylık Besi Tosunu | Irk: Simental."
-            },
-            "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "iştahsızlık", "anoreksi", "kan"],
-                "content": "Anoreksi. Ağız ve burundan kan gelmesi (Hemoptizi) nedeniyle yem tüketimi tamamen durmuştur."
-            },
             "RASYON_YEM": {
                 "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "besi", "nişasta"],
-                "content": "Yoğun mısır kırması ve arpa kırması ağırlıklı, kaba yem oranı son derece yetersiz yüksek nişastalı besi rasyonu verilmektedir."
+                "keywords": ["rasyon", "yem", "besle", "mısır", "arpa", "besi", "nişasta"],
+                "content": "Yoğun mısır ve arpa kırması ağırlıklı, kaba yemi yetersiz yüksek nişastalı besi rasyonu verilmektedir."
+            },
+            "ISTAH_DURUMU": {
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Kan kaybı ve şoka bağlı olarak iştah tamamen kapanmıştır."
             },
             "GECMIS_HASTALIK": {
                 "name": "Geçmiş Hastalık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "asidoz", "şişkinlik", "timpani", "rumenitis", "yem çarpması"],
-                "content": "Geçmişinde tekrarlayan akut/subakut rumen asidozu (yem çarpması) ve kronik hafif rumen timpani (şişkinlik) öyküsü vardır."
+                "keywords": ["geçmiş", "asidoz", "şişkinlik", "timpani", "rumenitis"],
+                "content": "Geçmişinde tekrarlayan akut/subakut rumen asidozu (yem çarpması) öyküsü mevcuttur."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "kan", "hemoptizi", "melena", "dışkı", "vital"],
-                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 118 atım/dk | Solunum Frekansı: 52 nefes/dk | Ağız/Burun: Köpüklü taze parlak kırmızı kan fışkırması (Hemoptizi) | Mukozalar: Bembeyaz (Ağır anemi) | CRT: 4.0 saniye | Dışkı: Siyah katran kıvamında (Melena)."
-            },
-            "KALP_AKCIGER_SESLERI": {
-                "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "boğuk", "rall", "akciğer"],
-                "content": "Kalp Oskültasyonu: Taşikardik, zayıf düştü sesleri. Akciğer Oskültasyonu: Bilateral yaygın kaba raller ve hışırtı sesleri duyuluyor."
+                "keywords": ["ateş", "sıcaklık", "nabız", "solunum", "hemoptizi", "melena", "anemi"],
+                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 118 atım/dk | Solunum: 52 nefes/dk | Ağız/Burun: Taze kırmızı kan fışkırması (Hemoptizi) | Mukozalar: Bembeyaz (Ağır Anemi) | Dışkı: Siyah katran kıvamında (Melena)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "anemi"],
-                "content": "Eritrosit (RBC): 2.1 x10⁶/µL (Kritik Kan Kaybı Anemisi) | Hemoglobin (Hb): 4.2 g/dL | Hematokrit (PCV): %12 (Acil Transfüzyon Eşiği!) | Lökosit (WBC): 21.5 x10³/µL | Plazma Fibrinojeni: 1050 mg/dL | PP/F: 7.23."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "bilirubin", "albümin", "globülin", "karaciğer"],
-                "content": "AST: 210 U/L (Karaciğer parankim nekrozu) | GGT: 68 U/L (Safra yolu/apse) | BUN: 42 mg/dL | Kreatinin: 1.6 mg/dL | Total Bilirubin: 1.2 mg/dL | İndirekt Bilirubin: 0.8 mg/dL."
-            },
-            "KAN_GAZI": {
-                "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.24 | pO₂: 52 mmHg | pCO₂: 50 mmHg | HCO₃⁻: 18.5 mmol/L | Baz Açığı: -6.2 mmol/L | Laktat: 4.2 mmol/L."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "rbc", "pcv", "anemi"],
+                "content": "RBC: 2.1 x10⁶/µL | PCV: %12 (Acil Transfüzyon Eşiği!) | WBC: 21.5 x10³/µL | Fibrinojen: 1050 mg/dL."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.018 | pH: 7.2 | Protein: (+) | Keton: Negatif | Sediment: Ağır anemiye bağlı izole hyalin silindirler."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar", "dansite", "mikrohematüri"],
+                "content": "Spesifik Gravite: 1.015 | Renk: Soluk sarı | Proteinüri: (+) | Eritrosit: Nadir."
             },
             "GORUNTULEME_PONKSIYON": {
-                "name": "Abdominal & Torakal Ultrasonografi",
-                "keywords": ["ultrason", "usg", "karaciğer", "apse", "vena cava", "trombüs", "arter", "anevrizma"],
-                "content": "Abdominal USG: Karaciğer parankiminde 6 cm çapında kılıflı apse odağı (Hepatic Abscess), Vena Cava Caudalis lümeninde tıkayıcı trombüs ekojenitesi. Torakal USG: Pulmoner arter çevresinde hematom ve anevrizma erozyonu."
+                "name": "Ultrasonografi",
+                "keywords": ["ultrason", "usg", "karaciğer", "apse", "vena cava"],
+                "content": "Abdominal USG: Karaciğerde 6 cm apse odağı, Vena Cava Caudalis lümeninde tıkayıcı trombüs ekojenitesi. Torakal USG: Pulmoner arter anevrizması ve rüptür hematomu."
             }
         }
     },
-
     "Vaka E (Kudret)": {
         "kod": "VAKA_E",
-        "sikayet": "Hocam, Kudret isimli danamızın kafasında, gözlerinin etrafında ve boynunda madeni para gibi yuvarlak döküntüler çıktı. Üstü kireç gibi beyaz beyaz kabuklandı, tüyleri döküldü. Yanındaki danalara da sıçramaya başladı...",
-        "klinik_gorsel": [
-            {
-                "title": "📷 KLİNİK MAKROSKOPİK LEZYON (Figure 1.2-1)",
-                "desc": "Baş, göz çevresi ve boyun bölgesinde dairesel, belirgin sınırlı, gri-beyaz kireçimsi kalın kabuklanma ve tüy dökülmesi (alopezi) lezyonları (Color Atlas of Farm Animal Dermatology - Scott, 2018)."
-            }
-        ],
+        "sikayet": "Baş, göz çevresi ve boyunda dairesel, kepekli, gri-beyaz kireçimsi kabuklu döküntüler ve tüy kaybı.",
+        "makroskopik_gorsel": {
+            "fig": "Figure 1.2-1",
+            "title": "Klinik Mantar Lezyonu (Baş ve Göz Çevresi)",
+            "file": "figure_1_2_1",
+            "desc": "Göz çevresi ve yüzde dairesel, grimsi-beyaz kireç benzeri kabarık kabuklanma ve alopezi (tüy kaybı)."
+        },
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 220 kg | Yaş: 7 Aylık Erkek Dana | Irk: Holstein."
+            "RASYON_YEM": {
+                "name": "Rasyon ve Barınak Şartları",
+                "keywords": ["barınak", "nem", "ışık", "güneş", "kalabalık", "rasyon", "besleme"],
+                "content": "Karanlık, nemli ve havalandırması yetersiz kapalı buzağı bölmesinde barındırılmaktadır. Güneş ışığı almamaktadır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "iştahsızlık"],
-                "content": "İştah Normaldir. Genel durumu iyidir."
-            },
-            "AHIR_BARINAK_SARTLARI": {
-                "name": "Ahır Yapısı & Hijyen Koşulları",
-                "keywords": ["ahır", "barınak", "nem", "ışık", "karanlık", "kalabalık", "hijyen", "dezenfeksiyon", "yataklık"],
-                "content": "Kapalı, nemli, güneş ışığı almayan ve havalandırması yetersiz kalabalık padokta barındırılmaktadır."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Genel iştah ve canlılık normaldir."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "deri", "döküntü", "kabuk", "vital"],
-                "content": "Vücut Sıcaklığı: 38.8 °C (NORMAL) | Kalp Frekansı: 78 atım/dk | Solunum Frekansı: 26 nefes/dk | Mukozalar: Pembe | Deri: Baş, göz çevresi ve boyunda dairesel, gri-beyaz kireçimsi kabuklu döküntüler."
+                "keywords": ["ateş", "sıcaklık", "nabız", "solunum", "kaşıntı", "lezyon", "deri"],
+                "content": "Vücut Sıcaklığı: 38.8 °C (NORMAL) | Kalp: 82 atım/dk | Solunum: 24 nefes/dk | Kaşıntı: YOK veya çok hafif. Deride dairesel kireçimsi kabuklar."
             },
-            "MIKROSKOPIK_MUAYENE": {
-                "name": "🔬 Mikroskopik Tahlil & %10 KOH Testi (Figure 1.2-11)",
-                "keywords": ["mikroskop", "mikroskopi", "koh", "kazıntı", "mantar tahlili", "lam", "artrospor", "spor", "deri kazıntısı"],
-                "content": "🔬 MİKROSKOPİK BULGU (Figure 1.2-11): %10 KOH (Potasyum Hidroksit) ile muamele edilmiş yüzeysel deri kazıntısının 40x ışık mikroskobu incelemesinde; kırık kıl şaftının dış yüzeyini zırh gibi saran küresel Trichophyton verrucosum ektotriks artrospor zincirleri ve dallanan hyalin hifler tespit edilmiştir."
-            },
-            "PARAKLINIK_TESTLER": {
-                "name": "Wood Lambası & Mantar Kültürü",
-                "keywords": ["wood", "uv", "floresans", "kültür", "besiyeri", "sabouraud"],
-                "content": "Wood Lambası (365 nm UV): Trichophyton verrucosum türü zayıf/negatif floresans vermiştir. Sabouraud Dextrose Agar Kültürü: 37°C'de 2 haftada mumu andıran kabarık krem renkli mantar kolonileri gelişmiştir."
+            "MIKROSKOPI_KAZINTI": {
+                "name": "Deri Kazıntısı & Mikroskopik Mantar Teşhisi",
+                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "koh", "mantar", "artrospor", "lam"],
+                "gorsel": {
+                    "fig": "Figure 1.2-11",
+                    "title": "Mikroskopik Mantar Sporu (%10 KOH Hazırlığı)",
+                    "file": "figure_1_2_11",
+                    "desc": "%10 KOH ile muamele edilmiş deri kazıntısında kıl şaftını saran küresel Trichophyton verrucosum ektotriks artrospor dizilimi (40x)."
+                },
+                "content": "%10 KOH ile hazırlanan deri kazıntısında kıl etrafında ektotriks artrospor zincirleri belirgin olarak izlenmiştir."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 8.4 x10³/µL (NORMAL) | Fibrinojen: 310 mg/dL (NORMAL) | Hematokrit: %34. Mantarın stratum corneum dışına inmemesi nedeniyle sistemik yangı yanıtı oluşmamıştır."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "ALT: 24 U/L | AST: 72 U/L | GGT: 20 U/L | BUN: 16 mg/dL | Kreatinin: 0.9 mg/dL | Total Protein: 7.1 g/dL (Tüm organ enzimleri fizyolojik sınırlardadır)."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "rbc"],
+                "content": "Tüm kan parametreleri fizyolojik sınırlar içerisindedir."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | pH: 8.0 | Protein: Negatif | Keton: Negatif | Sediment: Temiz."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar bulguları tamamen normaldir."
             }
         }
     },
-
     "Vaka F (Nazar)": {
         "kod": "VAKA_F",
-        "sikayet": "Hocam, Nazar isimli ineğimiz çıldırmış gibi sürekli çitlere, demirlere sürtünüyor! Şiddetle kaşınıyor. Kulaklarının arkası, boynu ve sırtının derisi fil derisi gibi kalınlaştı, kıvrım kıvrım oldu, kanatana kadar kaşıyor...",
-        "klinik_gorsel": [
-            {
-                "title": "📷 KLİNİK MAKROSKOPİK LEZYON 1 (Figure 1.3-13)",
-                "desc": "Yüz, kulak kepçesi, boyun ve omuz bölgesinde şiddetli kaşıntı izleri (eksforyasyon), deride kalınlaşma, kıvrımlaşma (likenifikasyon) ve tüy kaybı."
-            },
-            {
-                "title": "📷 KLİNİK MAKROSKOPİK LEZYON 2 (Figure 1.3-15)",
-                "desc": "Gövde ve sırt hattında yer yer kanamalı, kabuklu ve kepekli kronik mikotik/paraziter dermatit alanları."
-            }
-        ],
+        "sikayet": "Şiddetli kaşıntı, deride kalınlaşma (likenifikasyon), kıvrımlaşma, sırt ve boyunda döküntü ve kabuklanma.",
+        "makroskopik_gorsel": {
+            "fig": "Figure 1.3-13 & 1.3-15",
+            "title": "Klinik Uyuz Lezyonu (Deride Kalınlaşma ve Likenifikasyon)",
+            "file": "figure_1_3_13",
+            "desc": "Kulak kepçesi, boyun ve sırtta derinin fil derisi gibi kalınlaşması (likenifikasyon), kaşıntı eksforyasyonları ve kepekli döküntü."
+        },
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 380 kg | Yaş: 3 Yaşında İnek | Irk: Yerli Kara / Melez."
+            "RASYON_YEM": {
+                "name": "Barınak Şartları",
+                "keywords": ["barınak", "sürü", "temas", "uyuz"],
+                "content": "Sürüye yeni katılan hayvanlardan sonra kaşıntının diğer ineklere de yayıldığı ifade edilmiştir."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "kaşıntı", "iştahsızlık"],
-                "content": "Şiddetli kaşıntı huzursuzluğuna bağlı yem tüketimi azalmıştır (Hiporeksi)."
-            },
-            "AHIR_BARINAK_SARTLARI": {
-                "name": "Ahır Yapısı & Hijyen Koşulları",
-                "keywords": ["ahır", "barınak", "nem", "hijyen", "yataklık", "gübre", "kalabalık"],
-                "content": "Kış döneminde kapalı, altlığı ıslak ve gübreli, uzun süre tımar yapılmamış bakımsız barınak koşulları."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Şiddetli kaşıntı ve huzursuzluk nedeniyle yem tüketimi %30 azalmıştır."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "deri", "kaşıntı", "kabuk", "vital"],
-                "content": "Vücut Sıcaklığı: 39.1 °C | Kalp Frekansı: 88 atım/dk | Solunum Frekansı: 30 nefes/dk | Deri: Boyun, omuz ve kuyruk sokumunda fil derisi gibi kalınlaşma (Likenifikasyon), kepeklenme ve kanamalı kaşıntı izleri."
+                "keywords": ["ateş", "sıcaklık", "nabız", "solunum", "kaşıntı", "deri", "likenifikasyon"],
+                "content": "Vücut Sıcaklığı: 38.9 °C | Kalp: 88 atım/dk | Kaşıntı: AŞIRI ŞİDDETLİ. Deri kıvrımlaşmış, kalınlaşmış ve sertleşmiştir."
             },
-            "MIKROSKOPIK_MUAYENE": {
-                "name": "🔬 Mikroskopik Derin Kazıntı & Akar Muayenesi (Figure 1.3-18)",
-                "keywords": ["mikroskop", "mikroskopi", "derin kazıntı", "akar", "uyuz tahlili", "mineral yağ", "vazelin", "lamel", "scabies", "yumurta"],
-                "content": "🔬 MİKROSKOPİK BULGU (Figure 1.3-18): Bistüriye mineral yağ damlatılarak kapiller kanama görülünceye kadar alınan derin deri kazıntısının 10x-40x mikroskopik incelemesinde; kısa bacaklı, yuvarlak gövdeli canlı ergin Sarcoptes scabiei var. bovis akarları, oval akar yumurtaları (eggs) ve karakteristik koyu renkli dışkı peletleri (scybala) izlenmiştir."
+            "MIKROSKOPI_KAZINTI": {
+                "name": "Derin Deri Kazıntısı & Akar Mikroskopisi",
+                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "akar", "uyuz", "mineral yağ", "sarcoptes"],
+                "gorsel": {
+                    "fig": "Figure 1.3-18",
+                    "title": "Mikroskopik Sarcoptes Scabiei Akari",
+                    "file": "figure_1_3_18",
+                    "desc": "Derin deri kazıntısında mineral yağ altında tespit edilen canlı ergin Sarcoptes scabiei akarı (10x-40x)."
+                },
+                "content": "Kapiller kanama görülünceye kadar alınan derin deri kazıntısında canlı Sarcoptes scabiei ergin akarları ve oval yumurtaları tespit edilmiştir."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "eozinofil", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 14.2 x10³/µL | Eozinofil: %16 (Şiddetli Paraziter Eozinofili) | Plazma Fibrinojeni: 420 mg/dL (Hafif sekonder yangı)."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "Serum Albümin: 3.1 g/dL | Serum Globülin: 4.8 g/dL (Hafif artış) | AST: 74 U/L | GGT: 22 U/L | BUN: 18 mg/dL | Kreatinin: 1.0 mg/dL."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "eozinofil"],
+                "content": "Eozinofil oranı %14 (Eozinofili - Paraziter/Alerjik Yanıt). Diğer değerler normaldir."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.024 | pH: 8.1 | Protein: Negatif | Keton: Negatif | Sediment: Temiz."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar tahlili normaldir."
             }
         }
     },
-
     "Vaka G (Çiçek)": {
         "kod": "VAKA_G",
-        "sikayet": "Hocam, Çiçek isimli alaca ineğimizi güneşe çıkardıktan sonra ineğin vücudundaki BEYAZ tüylü deri bölgeleri torba gibi şişti, su topladı, kabuklanıp tabaka halinde soyulmaya başladı! Garip olan, siyah tüylü yerlerinde hiçbir şey yok, dipdiri duruyor...",
-        "klinik_gorsel": [
-            {
-                "title": "📷 KLİNİK MAKROSKOPİK LEZYON (Figure 1.7-35)",
-                "desc": "Karaciğer yetmezliğine bağlı kanda biriken filloeritrin nedeniyle YALNIZCA pigmentsiz (beyaz) deri bölgelerinde şekillenen eritem, hamur ödemi, derinin tabaka halinde soyulması (sloughing) ve nekroz; siyah pigmentli deri alanlarının tamamen sağlam kalması."
-            }
-        ],
+        "sikayet": "Mera dönüşü sadece pigmentsiz (beyaz) deri bölgelerinde şiddetli kızarıklık, soyulma, ödem ve nekroz.",
+        "makroskopik_gorsel": {
+            "fig": "Figure 1.7-35",
+            "title": "Hepatojen Fotosensitizasyon (Pigmentsiz Deri Nekrozu)",
+            "file": "figure_1_7_35",
+            "desc": "Yalnızca beyaz (pigmentsiz) deri alanlarında soyulma, hamur ödemi ve nekroz; siyah pigmentli derinin tamamen sağlam kalması."
+        },
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 450 kg | Yaş: 4 Yaşında İnek | Irk: Siyah Alaca (Holstein)."
+            "RASYON_YEM": {
+                "name": "Mera & Otlatma Öyküsü",
+                "keywords": ["mera", "ot", "klorofil", "güneş", "bitki", "otlatma"],
+                "content": "Bahar ayında taze otlu ve yabani otların (Lantana camara/Mantar toksinleri) bol olduğu merada otlatılmıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "güneş", "iştahsızlık"],
-                "content": "Ağrı ve fotofobi (güneşten kaçma) nedeniyle anoreksi gelişmiştir."
-            },
-            "AHIR_BARINAK_SARTLARI": {
-                "name": "Mera & Otlatma Öyküsü",
-                "keywords": ["otlatma", "mera", "bitki", "toksik", "güneş", "ot", "küf"],
-                "content": "Bahar döneminde yeşil otça zengin (klorofil yüksek) merada otlatılmıştır. Karaciğer hasarı oluşturan toksik bitkiler tespit edilmiştir."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Ağrılı deri soyulmaları ve karaciğer yetmezliğine bağlı iştahsızlık mevcuttur."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "ikter", "sarılık", "deri", "güneş yanığı", "vital"],
-                "content": "Vücut Sıcaklığı: 39.6 °C | Kalp Frekansı: 92 atım/dk | Mukoza: Şiddetli İkterik (Sarılık +) | Deri: Sadece BEYAZ deri alanlarında eritem, nekroz, hamur ödemi ve deri soyulması. Siyah alanlar sağlam."
-            },
-            "MIKROSKOPIK_MUAYENE": {
-                "name": "🔬 Deri Biyopsisi & Mikroskopik İnceleme",
-                "keywords": ["mikroskop", "mikroskopi", "biyopsi", "patoloji", "histopatoloji"],
-                "content": "🔬 MİKROSKOPİK HİSTOPATOLOJİ: Epidermal keratinositlerde koagülasyon nekrozu, koryumda şiddetli ödem, vaskülit ve fotodinamik doku harabiyeti."
-            },
-            "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 16.8 x10³/µL | Nötrofil: %72 | Plazma Fibrinojeni: 680 mg/dL (Doku nekrozuna bağlı yüksek)."
+                "keywords": ["ateş", "sıcaklık", "nabız", "solunum", "sarılık", "ikter", "beyaz deri", "soyulma"],
+                "content": "Vücut Sıcaklığı: 39.4 °C | Mukozalar: İkterik (Sarılık +) | Sadece beyaz deri alanlarında eritem, soyulma ve sızıntılı nekroz."
             },
             "BIYOKIMYA": {
                 "name": "Serum Biyokimyası & Karaciğer Enzimleri",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "bilirubin", "karaciğer", "sarılık", "kolestaz"],
-                "content": "GGT: 180 U/L (Ağır Karaciğer/Safra Tıkanıklığı) | AST: 290 U/L | ALP: 340 U/L | Total Bilirubin: 4.2 mg/dL | İndirekt Bilirubin: 1.8 mg/dL (Hepatojen İkter)."
+                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "bilirubin", "karaciğer", "filloeritrin"],
+                "content": "GGT: 180 U/L (Aşırı Yüksek - Safra Yolu Hasarı) | AST: 290 U/L | İndirekt Bilirubin: 1.8 mg/dL | Kanda Filloeritrin Düzeyi Yüksek."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "bilirubinüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.026 | pH: 7.4 | Bilirubinüri: (+++) Koyu çay/kehribar renkli idrar | Protein: (+) | Keton: Negatif."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar", "bilirubinüri"],
+                "content": "İdrar Rengi: Koyu çay rengi | Bilirubinüri: (+++) Pozitif."
             }
         }
     },
-
     "Vaka H (Ateş)": {
         "kod": "VAKA_H",
-        "sikayet": "Hocam, Ateş isimli tosunumuz antibiyotik ve döl kontrol aşısı vurulduktan yarım saat sonra aniden her tarafı kabardı! Göğsünde, boynunda ve yanlarında el içi gibi kabarık plaklar oluştu. Hayvan hırıltılı nefes alıyor...",
-        "klinik_gorsel": [
-            {
-                "title": "📷 KLİNİK MAKROSKOPİK LEZYON (Figure 1.5-1)",
-                "desc": "Gövde, boyun ve omuzlarda aniden beliren, parmakla basıldığında çukurlaşan (pitting edema), ödemli, kabarık, dairesel/plak benzeri akut ürtiker lezyonları (wheals/urtica)."
-            }
-        ],
+        "sikayet": "Gövde ve boyun derisinde aniden beliren ödemli dairesel kabarık plaklar (ürtiker) ve huzursuzluk.",
+        "makroskopik_gorsel": {
+            "fig": "Figure 1.5-1",
+            "title": "Akut Ürtiker (Ödem Plakları)",
+            "file": "figure_1_5_1",
+            "desc": "Gövde ve boyun derisinde aniden beliren dairesel ödemli kabarık ürtiker plakları (urtica)."
+        },
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 510 kg | Yaş: 2 Yaşında Tosun | Irk: Simental."
+            "RASYON_YEM": {
+                "name": "Aşı ve İlaç Öyküsü",
+                "keywords": ["aşı", "sinek", "böcek", "enjeksiyon", "yem değişimi", "alerji"],
+                "content": "2 saat önce yeni bir antibiyotik enjeksiyonu uygulanmış ve mera dönüşü böcek sokmasına maruz kalmıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "alerji", "iştahsızlık"],
-                "content": "Akut huzursuzluk ve solunum güçlüğü nedeniyle yem yememektedir."
-            },
-            "GECMIS_HASTALIK": {
-                "name": "Geçmiş Öykü & İlaç/Aşı Enjeksiyonu",
-                "keywords": ["aşı", "enjeksiyon", "ilaç", "antibiyotik", "serum", "sinek", "böcek", "alerji"],
-                "content": "Olaydan 30 dakika önce parenteral penisilin ve aşı uygulaması yapılmıştır (Akut Tip I Aşırı Duyarlılık / Anafilaktoid)."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Geçici huzursuzluk dışında iştah tam kapanmamıştır."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "ürtiker", "kabartı", "plak", "vital"],
-                "content": "Vücut Sıcaklığı: 39.4 °C | Kalp Frekansı: 108 atım/dk | Solunum Frekansı: 48 nefes/dk (Hırıltılı) | Deri: Gövde ve boyunda parmakla basılınca çukurlaşan ödemli kabarık ürtiker plakları."
-            },
-            "MIKROSKOPIK_MUAYENE": {
-                "name": "🔬 Biyopsi & Sitolojik Muayene",
-                "keywords": ["mikroskop", "mikroskopi", "sitoloji", "biyopsi"],
-                "content": "🔬 SİTOLOJİK BULGU: Dermis taze frotisinde yoğun degranüle mast hücreleri ve eozinofil lökosit infiltrasyonu."
+                "keywords": ["ateş", "sıcaklık", "nabız", "solunum", "ürtiker", "plak", "ödem"],
+                "content": "Vücut Sıcaklığı: 39.0 °C | Kalp: 92 atım/dk | Gövde derisinde parmakla basılınca çukurlaşan ödemli kabarık dairesel plaklar."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "eozinofil", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 12.8 x10³/µL | Eozinofil: %18 (Akut Alerjik Eozinofili) | Fibrinojen: 340 mg/dL (NORMAL)."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "Organ enzimleri ve böbrek değerleri tamamen fizyolojik sınırlar içerisindedir."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "eozinofil"],
+                "content": "Eozinofil: %12 (Alerjik Tip I Aşırı Duyarlılık)."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | pH: 7.8 | Protein: Negatif | Keton: Negatif | Sediment: Temiz."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar tahlili tamamen normaldir."
             }
         }
     },
-
     "Vaka I (Fırtına)": {
         "kod": "VAKA_I",
-        "sikayet": "Hocam, Fırtına isimli buzağımız dün geceden beri gırtlağından hırıl hırıl, düdük sesi gibi ses çıkararak nefes alıyor! Boynunu uzatmış hırlıyor. Boğazını tutunca acıyla peş peşe öksürüyor, ağzına yem alsa da yutamayıp yere düşürüyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Gırtlaktan ıslık/düdük sesi gibi hırıltı (stridor), belirgin nefes darlığı ve gırtlakta şiddetli ağrı/ödem.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 180 kg | Yaş: 5 Aylık Sütten Kesilmiş Buzağı | Irk: Simental."
+            "RASYON_YEM": {
+                "name": "Yutma ve Beslenme Öyküsü",
+                "keywords": ["yem", "yutma", "disfaji", "gırtlak", "su"],
+                "content": "Boğazındaki ödem ve ağrı nedeniyle yem yutarken zorlanmakta, lokmaları yere düşürmektedir."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "yutma", "disfaji", "iştahsızlık"],
-                "content": "Gırtlaktaki şiddetli yangı ve ödem nedeniyle yutma ağrılıdır (Disfaji). Ağzına aldığı yemi düşürmektedir."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "disfaji", "yutma"],
+                "content": "Ağrılı yutma (Disfaji) nedeniyle yem tüketimi durmuştur."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "gırtlak", "larenks", "stridor", "vital"],
-                "content": "Vücut Sıcaklığı: 40.4 °C (Yüksek Yüksek Yüksek Ateş) | Kalp Frekansı: 112 atım/dk | Solunum Frekansı: 50 nefes/dk | Solunumsal Düdük Sesi (Inspiratorik Stridor) +, Larenks bölgesine dokununca şiddetli öksürük ve ağrı."
+                "keywords": ["ateş", "sıcaklık", "stridor", "larenks", "ödem", "dispne", "trakea"],
+                "content": "Vücut Sıcaklığı: 40.1 °C | Kalp: 108 atım/dk | Solunum: 48 nefes/dk (İnspiratorik Dispne) | Larenks palpasyonunda şiddetli ödem ve ağrı reaksiyonu."
             },
             "KALP_AKCIGER_SESLERI": {
-                "name": "Kalp & Akciğer Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer", "rall", "veziküler"],
-                "content": "Kalp Oskültasyonu: Taşikardik ancak sesler temiz. Akciğer Oskültasyonu: Veziküler solunum sesleri tamamen NORMALDIR (Hastalık gırtlakta sınırlıdır)."
+                "name": "Akciğer Oskültasyonu",
+                "keywords": ["akciğer", "oskültasyon", "ses"],
+                "content": "Akciğer Oskültasyonu: Akciğer parankim vesiküler sesleri TAMAMEN NORMALdir. Ses üst solunum yolundan (larenks) kaynaklanmaktadır."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 22.4 x10³/µL | Nötrofil: %78 (Sola kayma +) | Plazma Fibrinojeni: 1100 mg/dL (Şiddetli Akut Yangı)."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "lökosit", "fibrinojen"],
+                "content": "WBC: 22.4 x10³/µL | Fibrinojen: 1100 mg/dL (Şiddetli Bakteriyel Yangı)."
             },
             "KAN_GAZI": {
                 "name": "Venöz Kan Gazı Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.38 | pO₂: 92 mmHg (NORMAL - Akciğer gaz alışverişi sağlam) | pCO₂: 44 mmHg | HCO₃⁻: 24.2 mmol/L | Baz Açığı: +0.5 mmol/L."
+                "keywords": ["kan gazı", "po2", "pco2"],
+                "content": "pO₂: 92 mmHg (Normal) | pCO₂: 44 mmHg (Normal - Akciğer gaz alışverişi sağlam)."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | pH: 7.8 | Protein: Trace (+) | Keton: Negatif | Sediment: Temiz."
-            },
-            "GORUNTULEME_PONKSIYON": {
-                "name": "Endoskopi & Mikrobiyoloji",
-                "keywords": ["endoskopi", "larenks", "laringoskop", "kültür", "bakteri", "fusobacterium"],
-                "content": "Endoskopi/Laringoskopi: Larengeal arytenoid kıkırdaklarda şiddetli ödem, hiperemi ve yer yer nekrotik psödomembranlar. Kültür: Fusobacterium necrophorum üremesi."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar bulguları normaldir."
             }
         }
     },
-
     "Vaka J (Şahin)": {
         "kod": "VAKA_J",
-        "sikayet": "Hocam, Şahin adındaki tosunumuzun 1 ay önce boynuzunu kesmiştik. Boynuz kütüğünün olduğu yer kapanmadı, oradan ve burnunun tek tarafından leş gibi kokuşmuş sümük akıyor! Sol tarafına dokundurtmuyor, kafasını yan tutuyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Tek taraflı pis kokulu (fetid) pürülan burun akıntısı, sinüs üzerinde vurukta matite ve başı eğik tutma.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 560 kg | Yaş: 2.5 Yaşında Tosun | Irk: Simental."
+            "GECMIS_HASTALIK": {
+                "name": "Cerrahi & Boynuz Kesimi Öyküsü",
+                "keywords": ["boynuz", "kesim", "dehorning", "sinüs", "ameliyat"],
+                "content": "1 ay önce hijyenik olmayan şartlarda boynuz kesimi (dehorning) yapılmış ve frontal sinüs boşluğu açılmıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "baş ağrısı", "iştahsızlık"],
-                "content": "Şiddetli baş ağrısı ve lokomotor isteksizlik nedeniyle yem tüketimi %50 azalmıştır."
-            },
-            "GECMIS_HASTALIK": {
-                "name": "Geçmiş Öykü & Boynuz Kesimi",
-                "keywords": ["boynuz", "dehorning", "kesim", "diş", "ameliyat", "yaralanma"],
-                "content": "Yaklaşık 1 ay önce açık ve steril olmayan koşullarda boynuz kesimi yapılmıştır (Sinüs enfeksiyonu sekeli)."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Baş ağrısı ve sinüs basıncına bağlı hafif iştahsızlık mevcuttur."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "sinüs", "akıntı", "perküsyon", "vital"],
-                "content": "Vücut Sıcaklığı: 39.5 °C | Kalp Frekansı: 86 atım/dk | Solunum Frekansı: 28 nefes/dk | Sol frontal sinüs bölgesi üzerine yapılan Perküsyonda MAT SES (Matite) ve şiddetli ağrı reaksiyonu. Tek taraflı pürülan fetid burun akıntısı."
+                "name": "Genel Muayene & Perküsyon Bulguları",
+                "keywords": ["ateş", "sinüs", "perküsyon", "matite", "akıntı", "koku"],
+                "content": "Vücut Sıcaklığı: 39.3 °C | Sol taraf frontal sinüs üzerine perküsyon yapıldığında MAT SES (Matite) ve şiddetli ağrı. Sol burun deliğinden pis kokulu irin akıntısı."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 18.6 x10³/µL | Nötrofil: %74 | Plazma Fibrinojeni: 850 mg/dL (Kronik pürülan yangı)."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "Serum Albümin: 2.8 g/dL | Serum Globülin: 5.4 g/dL (Kronik hipergamaglobulinemi) | AST: 82 U/L | BUN: 22 mg/dL."
+                "name": "Tam Hemogram Tahlili",
+                "keywords": ["hemogram", "wbc", "fibrinojen"],
+                "content": "WBC: 16.8 x10³/µL | Fibrinojen: 780 mg/dL."
             },
             "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.025 | pH: 8.0 | Protein: Negatif | Keton: Negatif | Sediment: Temiz."
-            },
-            "GORUNTULEME_PONKSIYON": {
-                "name": "Radyografi, Trepanasyon & Kültür",
-                "keywords": ["röntgen", "radyografi", "sinüs", "trepanasyon", "kültür", "bakteri"],
-                "content": "Frontal Sinüs Radyografisi: Sinüs boşluğunda radyoopak sıvı-hava seviyesi ve kemik trabeküllerinde opasite artışı. Kültür: Trueperella pyogenes ve anaerob bakteriler."
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar tahlili normaldir."
             }
         }
     },
-
     "Vaka K (Rüzgar)": {
         "kod": "VAKA_K",
-        "sikayet": "Hocam, Rüzgar isimli İngiliz atımız durduğu yerde aniden burnundan foşur foşur taze kırmızı kan akıtmaya başladı! Hiçbir darbe almadı. İki gündür samanı ağzına alıyor ama yutamıyor, lokmalar ve içtiği su burnundan geri çıkıyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Atın burnundan durduk yere spontan taze kırmızı kan gelmesi (epistaksis) ve yem yutma güçlüğü (disfaji).",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 480 kg | Yaş: 6 Yaşında Erkek Aygır | Irk: İngiliz Yarış Atı."
+            "GECMIS_HASTALIK": {
+                "name": "Klinik Seyir Öyküsü",
+                "keywords": ["kanama", "epistaksis", "at", "yutma", "su"],
+                "content": "Son 3 gündür içtiği su ve yem lokmaları burnundan geri gelmekte, dinlenme anında burnundan fışkırır gibi taze kan akmaktadır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "su", "burun", "disfaji", "yutma"],
-                "content": "Disfaji (Yutma Felci/Güçlüğü). İçtiği su ve yutmaya çalıştığı yemler sinir felci nedeniyle burun deliklerinden geri gelmektedir (Regürjitasyon)."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "disfaji", "yutma"],
+                "content": "N. glossopharyngeus ve N. vagus felcine bağlı şiddetli Yutma Güçlüğü (Disfaji) vardır."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "kanama", "epistaksis", "vital"],
-                "content": "Vücut Sıcaklığı: 38.2 °C (NORMAL) | Kalp Frekansı: 68 atım/dk (Kan kaybına bağlı hafif taşikardi) | Solunum Frekansı: 22 nefes/dk | Tek taraflı spontan taze kırmızı burun kanaması (Epistaksis) ve N. Glossopharyngeus / N. Vagus felci bulguları."
-            },
-            "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "anemi"],
-                "content": "Eritrosit (RBC): 4.8 x10⁶/µL | PCV: %26 (Epizodik kanamaya bağlı anemi) | Lökosit (WBC): 11.2 x10³/µL | Fibrinojen: 480 mg/dL."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "Organ enzimleri fizyolojik sınırlardadır."
-            },
-            "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.030 | pH: 7.5 | Protein: Negatif | Keton: Negatif | Sediment: Temiz."
+                "keywords": ["ateş", "epistaksis", "kan", "mukoza"],
+                "content": "Vücut Sıcaklığı: 38.2 °C (NORMAL) | Kalp: 64 atım/dk | Solunum: 22 nefes/dk | Tek taraflı aktif taze burun kanaması (Epistaksis). Mukozalar soluk."
             },
             "GORUNTULEME_PONKSIYON": {
-                "name": "Endoskopi & Mantar Teşhisi",
-                "keywords": ["endoskopi", "hava kesesi", "guttural", "aspergillus", "arter", "mantar"],
-                "content": "Endoskopi: Hava kesesi (Guttural Pouch) lümeninde Arteria carotis interna duvarı üzerinde siyah-gri-yeşil renkli mantar plağı (Aspergillus fumigatus) ve damar erozyonu."
+                "name": "Endoskopi Bulguları",
+                "keywords": ["endoskopi", "hava kesesi", "mantar", "arter", "aspergillus"],
+                "content": "Endoskopi: Hava kesesi (Guttural pouch) içinde Arteria carotis interna üzerinde siyah-yeşil mikotik plaklar (Aspergillus fumigatus) ve erozyon kanaması."
+            },
+            "IDRAR_TAHLILI": {
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar tahlili normaldir."
             }
         }
     },
-
     "Vaka L (Poyraz)": {
         "kod": "VAKA_L",
-        "sikayet": "Hocam, Poyraz adındaki atımız 1 ay önce ağır bir boğaz iltihabı (Gurm) geçirdi. Hastalık geçti derken şimdi kulaklarının altı, çenesinin arkası kafa gibi şişti! İki burun deliğinden de koyu sarı, iltihaplı akıntı geliyor, kafasını uzatarak duruyor...",
-        "klinik_gorsel": None,
+        "sikayet": "Geçirilmiş Gurm hastalığı sonrası parotis bölgesinde ağrılı şişlik ve çift taraflı koyu sarı irinli burun akıntısı.",
         "categories": {
-            "CANLI_AGIRLIK": {
-                "name": "Canlı Ağırlık, Yaş & Irk",
-                "keywords": ["ağırlık", "kilo", "kaç kg", "ağırlığı", "canlı ağırlık", "yaş", "ırk"],
-                "content": "Canlı Ağırlık: 520 kg | Yaş: 5 Yaşında At | Irk: Arap Atı."
+            "GECMIS_HASTALIK": {
+                "name": "Geçmiş Hastalık Öyküsü",
+                "keywords": ["gurm", "streptococcus", "boğaz", "lenf"],
+                "content": "1 ay önce boğaz bölgesinde apselerle seyreden Gurm (Streptococcus equi) hastalığı geçirmiştir."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yem Tüketimi Durumu",
-                "keywords": ["iştah", "yem yiyor mu", "ağrı", "gurm", "iştahsızlık"],
-                "content": "Ağrılı yutma nedeniyle iştah azalmıştır (Hiporeksi)."
-            },
-            "GECMIS_HASTALIK": {
-                "name": "Geçmiş Öykü & Gurm Hastalığı",
-                "keywords": ["gurm", "streptococcus", "boğaz", "apse", "lenf nodu", "geçmiş"],
-                "content": "Yaklaşık 1 ay önce klinik Gurm hastalığı (Streptococcus equi subsp. equi) geçirme öyküsü vardır."
+                "name": "İştah Durumu",
+                "keywords": ["iştah", "yem yiyor mu"],
+                "content": "Ağrılı baş duruşu ve yutma zorluğu nedeniyle hiporeksiktir."
             },
             "VITAL_BULGULAR": {
                 "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "hava kesesi", "parotis", "akıntı", "vital"],
-                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 72 atım/dk | Parotis ve retrofaringeal bölgede bilateral sıcak, ağrılı, fluktuğan şişlik. Çift taraflı koyu sarı pürülan burun akıntısı. Hayvan başını öne uzatmaktadır."
-            },
-            "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Lökosit (WBC): 24.8 x10³/µL (Şiddetli pürülan lökositoz) | Plazma Fibrinojeni: 920 mg/dL."
-            },
-            "BIYOKIMYA": {
-                "name": "Serum Biyokimyası & Enzimler",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "bun", "kreatinin", "albümin", "globülin"],
-                "content": "Serum Albümin: 2.6 g/dL | Serum Globülin: 5.8 g/dL (Hipergamaglobulinemi)."
-            },
-            "IDRAR_TAHLILI": {
-                "name": "İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "ketonüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.026 | pH: 7.8 | Protein: (+) | Keton: Negatif | Sediment: Temiz."
+                "keywords": ["ateş", "parotis", "hava kesesi", "akıntı", "irin"],
+                "content": "Vücut Sıcaklığı: 39.1 °C | Parotis ve baş-boyun birleşiminde ağrılı şişlik. Çift taraflı kokuşmuş pürülan burun akıntısı."
             },
             "GORUNTULEME_PONKSIYON": {
-                "name": "Endoskopi & Kondroit (Chondroid) Muayenesi",
-                "keywords": ["endoskopi", "hava kesesi", "empiyem", "kondroit", "chondroid", "kültür", "streptococcus"],
-                "content": "Endoskopi: Hava kesesi lümeninde yoğun irin birikimi ve kurumuş taşlaşmış irin yumakları (Chondroid / Kondroitler). Kültür: Streptococcus equi subsp. equi üremesi."
+                "name": "Endoskopi & Taşlaşmış İrin (Kondroit)",
+                "keywords": ["endoskopi", "kondroit", "irin", "empiyem", "taş"],
+                "content": "Endoskopi: Hava kesesi lümeninde yoğun pürülan eksudat ve taşlaşmış irin yumakları (Chondroids). Kültür: Streptococcus equi subsp. equi pozitif."
+            },
+            "IDRAR_TAHLILI": {
+                "name": "İdrar Tahlili",
+                "keywords": ["idrar"],
+                "content": "İdrar tahlili normaldir."
             }
         }
     }
@@ -756,10 +625,10 @@ st.markdown("<h1 class='main-title'>🐄 VET401 İç Hastalıkları I</h1>", uns
 st.markdown("<h3 class='sub-title'>Akıllı Anamnezi & Bulgu Sorgulama Konsolu (Serbest Metin Sorgulama)</h3>", unsafe_allow_html=True)
 
 st.markdown("""
-    <div style='background-color:#EBF1F5; padding:14px 18px; border-radius:6px; margin-bottom:15px; font-size:14px; border-left:5px solid #1F4E79;'>
-        <b>📌 Öğrenci Talimatı:</b> Bu sistemde şıklar veya hazır butonlar <u>yoktur</u>. 
+    <div style='background-color:#EBF1F5; padding:14px 18px; border-radius:6px; margin-bottom:20px; font-size:14px; border-left:5px solid #1F4E79;'>
+        <b>📌 Öğrenci Talimatı:</b> Bu sistemde hazır butonlar <u>yoktur</u>. 
         Kafanızdaki klinik şüpheye göre ne öğrenmek istiyorsanız kutucuğa <b>kendi cümlenizle veya kelimelerinizle</b> yazınız 
-        (Örn: <i>"Canlı ağırlığı kaç kg?"</i>, <i>"İştahı nasıl?"</i>, <i>"Rasyonu nedir?"</i>, <i>"Ateşi kaç derece?"</i>, <i>"Hemogram ve idrar tahlili istiyorum"</i>, <i>"Mikroskopta ne görüldü?"</i>).
+        (Örn: <i>"Hayvan ne ile besleniyor?"</i>, <i>"İştahı nasıl?"</i>, <i>"Kalp sesleri nasıl?"</i>, <i>"Ateşi kaç derece?"</i>, <i>"Hemogram tahlili istiyorum"</i>, <i>"İdrar tahlili sonuçları nedir?"</i>).
     </div>
 """, unsafe_allow_html=True)
 
@@ -770,36 +639,34 @@ selected_case_name = st.selectbox(
     index=0
 )
 
-# Session State Management for Case Switching Reset
-if "current_selected_case" not in st.session_state:
-    st.session_state.current_selected_case = selected_case_name
+active_case = CASES[selected_case_name]
 
+st.markdown(f"<div class='vaka-header'>📋 {selected_case_name} — İlk Başvuru Şikayeti</div>", unsafe_allow_html=True)
+st.info(f"**Hastanın Başvuru Şikayeti:** {active_case['sikayet']}")
+
+# AUTOMATIC DISPLAY OF MACROSCOPIC CLINICAL IMAGES UPON CASE SELECTION
+if "makroskopik_gorsel" in active_case:
+    mg = active_case["makroskopik_gorsel"]
+    st.markdown("### 📸 Klinik Makroskopik Lezyon Fotoğrafı")
+    
+    img_path = find_gorsel_path(mg["file"])
+    
+    if img_path and os.path.exists(img_path):
+        st.image(img_path, caption=f"{mg['fig']} - {mg['title']}", use_column_width=True)
+        st.caption(f"ℹ️ **Klinik Görsel Tanımı:** {mg['desc']}")
+    else:
+        st.warning(f"⚠️ **Klinik Görsel Dosyası Aratılıyor:** `{mg['file']}`\n\nResim `gorseller/` klasöründe bulunamadıysa aşağıdaki butondan doğrudan yükleyebilirsiniz:")
+        uploaded_img = st.file_uploader(f"📸 {mg['fig']} için Fotoğraf Yükleyiniz (.jpg / .png):", type=["jpg", "jpeg", "png"], key=f"up_macro_{active_case['kod']}")
+        if uploaded_img is not None:
+            st.image(uploaded_img, caption=f"Yüklenen Klinik Görsel: {mg['fig']}", use_column_width=True)
+            st.caption(f"ℹ️ **Klinik Görsel Tanımı:** {mg['desc']}")
+
+# Session State for Questions History
 if "history" not in st.session_state:
     st.session_state.history = {}
 
-# If user switches case from dropdown, reset history for fresh view
-if st.session_state.current_selected_case != selected_case_name:
-    st.session_state.current_selected_case = selected_case_name
-    st.session_state.history[selected_case_name] = []
-
 if selected_case_name not in st.session_state.history:
     st.session_state.history[selected_case_name] = []
-
-active_case = CASES[selected_case_name]
-
-# Header for Case Initial Complaint
-st.markdown(f"<div class='vaka-header'>📋 {selected_case_name} — İlk Başvuru Şikayeti</div>", unsafe_allow_html=True)
-st.info(f"**Hastanın Başvuru Şikayeti (Yetiştirici Anamnezi):** {active_case['sikayet']}")
-
-# AUTOMATIC CLINICAL VISUAL DISPLAY (AUTOMATICALLY SHOWN WITHOUT ASKING ANY QUESTION)
-if active_case.get("klinik_gorsel"):
-    st.markdown("<div class='klinik-gorsel-box'>", unsafe_allow_html=True)
-    st.markdown("### 📸 Klinik Makroskopik Görsel Bulgular (Vaka İnceleme Paneli)")
-    st.markdown("*Aşağıdaki klinik lezyon fotoğrafları hasta başvurusu anında fiziki muayenede doğrudan gözlemlenmiştir:*")
-    st.markdown("")
-    for gorsel in active_case["klinik_gorsel"]:
-        st.warning(f"**{gorsel['title']}**\n\n{gorsel['desc']}")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # Question Input Section
 st.markdown("### 💬 Sorunuzu veya İncelemek İstediğiniz Muayeneyi Yazınız:")
@@ -813,7 +680,7 @@ def match_query(user_text, categories_dict):
     for cat_key, cat_info in categories_dict.items():
         for kw in cat_info["keywords"]:
             kw_clean = kw.lower().replace("ı", "i").replace("ğ", "g").replace("ü", "u").replace("ş", "s").replace("ö", "o").replace("ç", "c")
-            if re.search(r'\\b' + re.escape(kw_clean), text_clean) or kw_clean in text_clean:
+            if re.search(r'\b' + re.escape(kw_clean), text_clean) or kw_clean in text_clean:
                 matched_cats.append(cat_key)
                 break
                 
@@ -823,9 +690,9 @@ col_input, col_button = st.columns([4, 1])
 
 with col_input:
     user_query = st.text_input(
-        "Sorunuzu Buraya Yazınız (Örn: Canlı ağırlığı?, Ateşi kaç?, İdrar tahlili?, Mikroskopta ne var?):",
+        "Sorunuzu Buraya Yazınız (Örn: Rasyon bilgisi nedir?, İştahı nasıl?, Kalp sesleri?, Ateşi kaç?, İdrar tahlili?):",
         key="query_input",
-        placeholder="Örn: Hayvan kaç kg?, Rasyonu ne?, Hemogram tahlili?, Mikroskopik inceleme?..."
+        placeholder="Örn: Hayvan ne yiyor?, İştah durumu?, Ateş kaç?, Hemogram?, İdrar tahlili?..."
     )
 
 with col_button:
@@ -839,23 +706,25 @@ if submit_btn and user_query:
         new_discoveries = 0
         for cat_key in matches:
             cat_data = active_case["categories"][cat_key]
-            # Check if already in history
             already_in = any(item["cat_key"] == cat_key for item in st.session_state.history[selected_case_name])
             if not already_in:
-                st.session_state.history[selected_case_name].append({
+                item_dict = {
                     "cat_key": cat_key,
                     "query": user_query,
                     "title": cat_data["name"],
                     "content": cat_data["content"]
-                })
+                }
+                if "gorsel" in cat_data:
+                    item_dict["gorsel"] = cat_data["gorsel"]
+                st.session_state.history[selected_case_name].append(item_dict)
                 new_discoveries += 1
         
         if new_discoveries > 0:
-            st.success(f"🎉 Teşekkürler! Sorunuzla ilişkili {new_discoveries} yeni klinik/laboratuvar bulgusu açığa çıkarıldı!")
+            st.success(f"🎉 Teşekkürler! Sorunuzla ilişkili {new_discoveries} yeni klinik bulgu / bilgi açığa çıkarıldı!")
         else:
             st.info("Bu soruyla ilgili bilgi zaten daha önce açığa çıkarılmıştı. Aşağıdaki keşifler listenizden okuyabilirsiniz.")
     else:
-        st.warning("⚠️ Girdiğiniz soru veya kelimelerle eşleşen bir bilgi bulunamadı. Lütfen sorunuzu farklı anahtar kelimelerle yazınız (Örn: 'ağırlık', 'iştah', 'ateş', 'hemogram', 'idrar', 'mikroskop', 'ultrason').")
+        st.warning("⚠️ Girdiğiniz soru veya kelimelerle eşleşen bir bilgi bulunamadı. Lütfen sorunuzu farklı anahtar kelimelerle yazınız.")
 
 # Display Discovered Information
 st.markdown("---")
@@ -869,31 +738,25 @@ if st.session_state.history[selected_case_name]:
                     <span class='badge-category'>{item['title']}</span>
                     <span style='font-size:12px; color:#7F7F7F;'>Sorulan Soru: "{item['query']}"</span>
                 </div>
-                <div class='card-content'><b>🩺 Bulgu / Tahlil Sonucu:</b> {item['content']}</div>
+                <div class='card-content'><b>🩺 Bulgu / Öykü:</b> {item['content']}</div>
             </div>
         """, unsafe_allow_html=True)
+        
+        # MICROSCOPIC IMAGES DISPLAYED ONLY AFTER BEING QUERY-TRIGGERED
+        if "gorsel" in item:
+            g = item["gorsel"]
+            st.markdown(f"#### 🔬 {g['fig']} - {g['title']}")
+            
+            micro_path = find_gorsel_path(g["file"])
+            
+            if micro_path and os.path.exists(micro_path):
+                st.image(micro_path, caption=f"{g['fig']} - {g['title']}", use_column_width=True)
+                st.caption(f"ℹ️ **Mikroskopik Görsel Tanımı:** {g['desc']}")
+            else:
+                st.warning(f"⚠️ **Mikroskopik Görsel Dosyası Aratılıyor:** `{g['file']}`")
+                up_micro = st.file_uploader(f"🔬 {g['fig']} için Mikroskopik Fotoğraf Yükleyiniz (.jpg / .png):", type=["jpg", "jpeg", "png"], key=f"up_micro_{item['cat_key']}")
+                if up_micro is not None:
+                    st.image(up_micro, caption=f"Yüklenen Mikroskopik Görsel: {g['fig']}", use_column_width=True)
+                    st.caption(f"ℹ️ **Mikroskopik Görsel Tanımı:** {g['desc']}")
 else:
     st.info("Henüz bu vaka için soru sormadınız. Yukarıdaki arama kutusuna merak ettiğiniz soruyu yazarak muayeneye başlayınız.")
-
-# Reset History Button
-if st.session_state.history[selected_case_name]:
-    if st.button("🗑️ Bu Vakanın Sorgu Geçmişini Temizle"):
-        st.session_state.history[selected_case_name] = []
-        st.rerun()
-
-# Teacher Portal
-with st.sidebar:
-    st.markdown("### 🏛️ ÇU Veteriner Fakültesi")
-    st.markdown("**VET401 İç Hastalıkları I**")
-    st.markdown("---")
-    st.markdown("### 🔒 Eğitmen Portalı")
-    teacher_login = st.checkbox("Eğitmen Anahtar Paneli")
-    if teacher_login:
-        pass_code = st.text_input("Giriş Şifresi:", type="password")
-        if pass_code == "vet401":
-            st.success("Eğitmen Erişimi Onaylandı!")
-            st.markdown("#### 🔑 Bu Vakanın Gizli Tüm Bilgileri:")
-            for ck, cv in active_case["categories"].items():
-                st.markdown(f"**• {cv['name']}:** {cv['content']}")
-        elif pass_code:
-            st.error("Hatalı Şifre!")
