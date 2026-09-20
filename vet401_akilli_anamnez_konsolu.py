@@ -1,9 +1,4 @@
-import os
-import sys
-
-# Script to build the master 12-case app with comprehensive laboratory and diagnostic test categories for every single case (A to L)
-
-app_code = '''import streamlit as st
+import streamlit as st
 import re
 import os
 
@@ -13,31 +8,6 @@ st.set_page_config(
     page_icon="🐄",
     layout="wide",
 )
-
-# Helper function to find images regardless of case or extension
-def find_gorsel_path(base_file_path):
-    if not base_file_path:
-        return None
-    if os.path.exists(base_file_path):
-        return base_file_path
-    
-    # Check in gorseller/ or root directory
-    dir_name, file_name = os.path.split(base_file_path)
-    if not dir_name:
-        dir_name = "gorseller"
-    
-    name_no_ext, _ = os.path.splitext(file_name)
-    
-    search_dirs = [dir_name, "gorseller", "."]
-    valid_exts = [".jpg", ".png", ".jpeg", ".JPG", ".PNG", ".JPEG", ".webp"]
-    
-    for d in search_dirs:
-        if os.path.exists(d):
-            for f in os.listdir(d):
-                f_name_no_ext, f_ext = os.path.splitext(f)
-                if f_name_no_ext.lower() == name_no_ext.lower() and f_ext.lower() in valid_exts:
-                    return os.path.join(d, f)
-    return None
 
 # Styling
 st.markdown("""
@@ -96,1025 +66,1060 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Cases Knowledge Base
+# Helper function to find images safely (case-insensitive & extension-insensitive)
+def find_gorsel_path(base_path):
+    if not base_path:
+        return None
+    if os.path.exists(base_path):
+        return base_path
+    
+    # Extract directory and filename
+    dirname = os.path.dirname(base_path) or '.'
+    filename = os.path.basename(base_path)
+    name_no_ext, _ = os.path.splitext(filename)
+    
+    if os.path.exists(dirname):
+        for f in os.listdir(dirname):
+            f_no_ext, _ = os.path.splitext(f)
+            if f_no_ext.lower() == name_no_ext.lower():
+                full_p = os.path.join(dirname, f)
+                if os.path.isfile(full_p):
+                    return full_p
+    return None
+
+# Cases Knowledge Base (12 Cases with 15 Complete Categories Each)
 CASES = {
     "Vaka A (Papatya)": {
         "kod": "VAKA_A",
-        "tanim": "Traumatik Retikuloperikarditis (TRP)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 540 kiloluk Papatya isimli ineğimiz 3 gündür yememeye başladı, sütü bıçak gibi kesildi. Çenesinin altı ve gerdanı su toplamış gibi şişti. Yürümek istemiyor, sırtını kamburlaştırıp dikiliyor. Göğsünü tutunca inliyor...'",
+        "sikayet": "Gerdan ve çene altında soğuk ödem, iştahsızlık, belirgin süt verimi düşüşü, kambur duruş ve inleme.",
+        "makroskopik_gorsel": {"fig": "TRP", "title": "Gerdan Ödemi & Jugular Staz", "file": "gorseller/trp_gerdan_odemi.jpg"},
+        "kesin_tani": "Traumatik Retikuloperikarditis (TRP / Septik Perikarditis)",
+        "ayirici_tani": "Miyokardiyal Lenfosarkom (Ağrı testleri - ferroskop -), Cor Pulmonale (Rakım öyküsü +, kültür steril), Vena Cava Caudalis Trombozu (Hemoptizi +).",
+        "tedavi": "Sütü sağılan ineğe parenteral Geniş Spektrumlu Antibiyotik (Ceftiofur 2.2 mg/kg IV veya Penisilin-Streptomisin), Furosemid (0.5-1 mg/kg IV ödem çözücü), Rumen mıknatısı yutturulması, Göğüs eğimli padokta istirahat. İleri vakada Perikardiyosentez ve drenaj.",
+        "kontrendike": "Şiddetli venöz dolgunluk varken HIZLI IZOTONIK SIVI YÜKLEMESİ (Akut sağ kalp yetmezliğini tetikler!). Agresif hareket ettirme.",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "ot", "mera", "silaj", "balya", "saman", "kaba", "tel", "çivi", "yabancı"],
-                "content": "İşletmede entansif kaba/yoğun yem karma rasyonu uygulanmaktadır. Balya parçalama esnasında kaba yeme inşaat tellerinin ve çivilerin karışmış olabileceği belirtilmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mısır", "arpa", "silaj", "balya", "saman", "tel", "çivi", "yabancı cisim"],
+                "content": "İşletmede karma kaba/yoğun rasyon uygulanmaktadır. Balya parçalama esnasında kaba yeme inşaat tellerinin ve çivilerin karışmış olabileceği şüphelenilmektedir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "coğrafya", "yükseklik", "dağ", "ova", "sürü"],
-                "content": "Ceyhan ovasında (rakım ~50 metre) sabit süt tesisinde barındırılmaktadır. Yüksek rakım nakli veya mera değişimi öyküsü yoktur."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil", "coğrafya", "yükseklik"],
+                "content": "Hayvan Ceyhan ovasındaki (rakım ~50m) sabit süt tesisinde doğup büyümüştür. Herhangi bir yüksek rakım veya yayla nakli öyküsü yoktur."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce", "doğum"],
-                "content": "Geçmişinde kronik hastalık öyküsü yoktur. 2 ay önce sorunsuz doğum yapmıştır. Son 3 günde akut iştahsızlık ve süt veriminde %85 düşüş gelişmiştir."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "mastitis", "öykü"],
+                "content": "2 ay önce sorunsuz doğum yapmıştır. Geçmişinde kronik mastitis veya metritis kaydı bulunmamaktadır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "yutma", "su içme", "anoreksi", "hiporeksi"],
-                "content": "Tam anoreksi (iştah tamamen durmuş). Geviş getirme refleksleri durmuş, Rumen hareketleri yok denecek kadar zayıf (0-1 atım/3 dk)."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "yutma", "geviş", "anoreksi"],
+                "content": "Komple Anoreksi (Ağrı ve perikardiyal baskı nedeniyle yem ve su tüketimini tamamen kesmiştir, geviş getirme durmuştur)."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "göz", "crt", "dolum", "dehidrasyon", "ödem", "gerdan", "jugular"],
-                "content": "Vücut Sıcaklığı: 39.8 °C (Subfebril/Yüksek) | Kalp Frekansı: 102 atım/dk (Taşikardi) | Solunum Frekansı: 42 nefes/dk (Yüzeyel kesik solunum) | Mukoza: Soluk pembe | CRT: 2.5 saniye | Dehidrasyon: %6 | Gerdan ve submandibuler bölgede soğuk hamur ödem | Vena jugularis stazı +, yalancı jugular nabız +."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "ödem", "jugular"],
+                "content": "Vücut Sıcaklığı: 39.8 °C | Kalp Frekansı: 102 atım/dk | Solunum Frekansı: 42 nefes/dk | Mukozalar: Soluk pembe | CRT: 2.5 saniye | Gerdan ve submandibuler bölgede hamur kıvamında soğuk ödem | Vena jugularis stazı +, yalancı jugular nabız +."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "muffled", "boğuk", "rall", "akciğer"],
-                "content": "Kalp Oskültasyonu: Perikardiyal kese içinde gaz ve pürülan sıvının çalkalanmasına bağlı karakteristik çamaşır makinesi / su çalkantı sesi (splashing sound) ve boğuk kalp sesleri (muffled heart sounds) duyuluyor. Akciğer Oskültasyonu: Ventro-lateral alanlarda solunum sesleri hafif azalmış."
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "şılpırtı", "çalkantı", "splashing", "boğuk"],
+                "content": "Kalp Oskültasyonu: Gaz ve pürülan sıvının çalkalanmasına bağlı çamaşır makinesi / su şılpırtısı (splashing) sesi ve boğuk kalp sesleri. Akciğer Oskültasyonu: Ventro-lateral alanlarda solunum sesleri hafif azalmış."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "kalp", "cidago"],
-                "content": "Retikulum Ağrı Testleri: Cidago sıkıştırma (Withers pinch) +, Sopa/Kama muayenesi +, Kalp bölgesi perküsyonunda şiddetli inleme ve ağrı reaksiyonu +."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "ferroskop"],
+                "content": "Withers pinch (cidago sıkıştırma) testi (+), sopa/kama testi (+), retikulum bölgesinde ferroskop pozitif sinyal vermektedir."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "pp/f", "nötrofil", "lökositoz"],
-                "content": "Eritrosit (RBC): 5.8 x10⁶/µL | Hemoglobin (Hb): 9.8 g/dL | Hematokrit (PCV): %31 | Lökosit (WBC): 22.4 x10³/µL (Şiddetli Lökositoz, sola kayma) | Nötrofil: %78 | Lenfosit: %18 | Plazma Fibrinojeni: 1250 mg/dL (Aşırı Yüksek) | PP/F Oranı: 6.3 (<10 - Şiddetli Aktif Fibrinöz Yangı)."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "hematokrit", "fibrinojen", "pp/f"],
+                "content": "RBC: 5.2 x10⁶/µL | Hb: 8.5 g/dL | PCV: %26 | WBC: 22.4 x10³/µL (Sola kaymalı rejenere nötrofili) | Plazma Fibrinojeni: 1250 mg/dL (Aşırı yüksek) | PP/F Oranı: 6.3 (<10: Şiddetli aktif fibrinöz yangı)."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh", "gldh"],
-                "content": "AST: 185 U/L (Hafif yüksek - karaciğer pasif stazı) | GGT: 48 U/L | ALT: 32 U/L | ALP: 110 U/L | CK: 210 U/L | LDH: 480 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin", "enzim"],
+                "content": "AST: 145 U/L | GGT: 42 U/L | ALT: 28 U/L | ALP: 85 U/L | CK: 180 U/L | LDH: 1150 U/L | Kardiyak Troponin I: 1.85 ng/mL (Miyokardiyal parietal yangı / harabiyet)."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin", "trigliserid"],
-                "content": "BUN (Üre): 38 mg/dL | Kreatinin: 1.4 mg/dL | Glikoz: 68 mg/dL | Total Bilirubin: 1.1 mg/dL | Direkt Bilirubin: 0.4 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 32 mg/dL | Serum Kreatinin: 1.8 mg/dL | Kan Glikozu: 72 mg/dL | Total Bilirubin: 1.1 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit", "pıhtılaşma"],
-                "content": "Total Protein: 8.2 g/dL | Albümin: 2.8 g/dL | Globülin: 5.4 g/dL (Hipergamaglobulinemi) | Glutaraldehit Pıhtılaşma Testi: 1.5 dakikada pozitif pıhtılaşma (<3 dk - Akut Şiddetli Yangı)."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa", "yangı"],
+                "content": "Total Protein: 92 g/L (Hiperproteinemi) | Albümin: 2.8 g/dL | Globülin: 6.4 g/dL | Glutaraldehit Pıhtılaşma Süresi: 1.5 dakika (<3 dk: Ağır hipergamaglobülinemi) | Serum Amyloid A (SAA): 480 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "magnezyum", "na", "k", "cl", "ca"],
-                "content": "Sodyum (Na⁺): 138 mmol/L | Potasyum (K⁺): 3.9 mmol/L | Klor (Cl⁻): 98 mmol/L | Kalsiyum (Ca²⁺): 8.8 mg/dL | İnorganik Fosfor: 4.5 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "elektrolit"],
+                "content": "Na⁺: 132 mmol/L | K⁺: 3.8 mmol/L | Cl⁻: 92 mmol/L (Hafif hipokloremik alkaloz) | Ca²⁺: 8.2 mg/dL | İnk. Fosfor: 4.5 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.32 | pO₂: 58 mmHg (Hafif Hipoksi) | pCO₂: 46 mmHg | HCO₃⁻: 20.2 mmol/L | Baz Açığı (BE): -4.5 mmol/L | Laktat: 2.8 mmol/L (Hafif Doku Hipoksisi)."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "baz açığı", "be", "laktat"],
+                "content": "Kan pH: 7.48 | pO₂: 62 mmHg | pCO₂: 46 mmHg | HCO₃⁻: 32.5 mmol/L | Baz Açığı (BE): +7.8 mmol/L (Metabolik Alkaloz) | Laktat: 2.8 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "ketonüri", "bilirubinüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.026 | İdrar pH: 7.5 | Proteinüri: +1 (Hafif) | Glikozüri: Negatif | Ketonüri: Negatif | Bilirubinüri: Negatif | Mikrohematüri: Negatif | Mikroskopik Sediment: İki üç lökosit, nadir yassı epitel hücreleri."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "glikozüri", "sediment", "idrar ph"],
+                "content": "İdrar Spesifik Gravite: 1.022 | İdrar pH: 8.0 | Proteinüri: (+2) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment: Nadir yassı epitel, eritrosit negatif."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Perikardiyosentez",
-                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "bakteri", "perikardiyosentez", "röntgen"],
-                "content": "Ultrasonografi (Torakal/Retiküler): Perikardiyal kese içinde 5 cm kalınlığında fibrin bantları ve hiperekojen gaz kabarcıkları içeren bol pürülan sıvı birikimi. Retikulum duvarında 4 cm'lik kılıflı yabancı cisim yolu. Perikardiyosentez: Kötü kokulu, bulanık, pürülan exsudat. Kültür: Trueperella pyogenes ve anaerob enfeksiyon üremesi."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "bakteri", "kültür", "ponksiyon", "perikardiyosentez"],
+                "content": "Ultrasonografi: Perikard kasesinde 8 cm genişliğinde hiperekojenik fibrin bantları ve hipoekojenik sıvı birikimi. Perikardiyosentez: Kirli sarı-yeşil renkli fetid eksudat; kültürde Trueperella pyogenes ve anaerobik bakteriler."
             }
         }
     },
     "Vaka B (Yonca)": {
         "kod": "VAKA_B",
-        "tanim": "Vejetatif Valvüler Endokardit (Triküspid Kapak)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 580 kiloluk Yonca isimli ineğimiz haftalardır bir iyileşip bir hastalanıyor. Antibiyotik yapıyoruz ateşi düşüyor, ilaç bitince tekrar 40 dereceye fırlıyor. Zayıfladı, bazen de ön bacağına basamayıp topallıyor...'",
+        "sikayet": "Tekrarlayan fluktuan ateş, topallık, çabuk yorulma, zayıflama ve süt verimi düşüşü.",
+        "makroskopik_gorsel": {"fig": "Endokardit", "title": "Bacak Eklem Şişliği & Topallık", "file": "gorseller/endokardit_topallik.jpg"},
+        "kesin_tani": "Valvüler Endokarditis (Vejetatif Endokardit)",
+        "ayirici_tani": "TRP (Kalp sesleri boğuk değil, çalkantı sesi yok, endokarditte sistolik üfürüm var), Ağrı testleri (-).",
+        "tedavi": "Uzun süreli (En az 3-4 hafta) yüksek doz parenteral Antibiyotik (Penisilin G + Gentamisin veya Ceftiofur), Aspirin (100 mg/kg 48 saatte bir antiagregan), Düşük doz Heparin, Mutlak istirahat.",
+        "kontrendike": "Ağır egzersiz ve nakil (Vejetatif kitleden septik emboli kopma ve ani ölüm riski!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "mısır", "arpa", "ot", "silaj", "balya", "saman"],
-                "content": "Standart süt sığırı rasyonu verilmektedir. Yem kalitesi normaldir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mısır", "arpa", "ot", "silaj"],
+                "content": "Standart süt sığırı rasyonu verilmektedir. Yem değişikliği veya rasyon krizi yoktur."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "sürü"],
-                "content": "Sabit bağlı ahır işletmesidir. Rakım değişikliği yoktur."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Çukurova bölgesinde açık serbest duraklı tesiste barındırılmaktadır."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "rahim", "mastitis", "meme", "öykü", "geçirdi", "önce", "ayak", "tırnak"],
-                "content": "3 ay önce geçirilmiş ağır kronik purulent metritis ve kronik tırnak arası apse (interdigital phlegmon) öyküsü vardır. Tekrarlayan fluktuan ateş atakları görülmektedir."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "metritis", "mastitis", "öykü"],
+                "content": "1 ay önce şiddetli puerperal metritis ve kronik mastitis tedavisi görmüştür (Bakteriyemi kaynağı!)."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi", "hiporeksi"],
-                "content": "Değişken (ondülan) hiporeksi. Ateş yükseldiğinde yem yemeyi bırakıyor, ateş düşünce az az yiyor."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "hiporeksi"],
+                "content": "Fluktuan ateşe bağlı dalgalı iştah (Hiporeksi), kilo kaybı belirgin."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "ödem", "topallık", "eklem"],
-                "content": "Vücut Sıcaklığı: 40.1 °C (Dirençli Fluktuan Ateş) | Kalp Frekansı: 110 atım/dk | Solunum Frekansı: 38 nefes/dk | Mukozalar: Soluk ve fokal peteşili | CRT: 2.8 saniye | Gerdanda ödem hafif, Vena jugularis dolgun, gerçek sistolik jugular nabız +, sol ön eklemde şişlik ve topallık +."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "topallık"],
+                "content": "Vücut Sıcaklığı: 40.2 °C (Alevli tekrarlayan ateş) | Kalp Frekansı: 112 atım/dk | Solunum Frekansı: 38 nefes/dk | Mukozalar: Soluk / peteşili | CRT: 3.0 saniye | Sağ ön bacak karpal ekleminde sıcak ağrılı şişlik ve topallık."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "systolic", "triküspid", "rall"],
-                "content": "Kalp Oskültasyonu: Sağ 4. interkostal aralıkta (Triküspid kapak odağı) çok şiddetli (Grade 5/6) pansistolik üfürüm (systolic murmur) duyuluyor. Akciğer Oskültasyonu: Bilateral hafif sertleşmiş veziküler solunum sesleri."
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "sistolik", "akciğer"],
+                "content": "Kalp Oskültasyonu: Sol/sağ AV kapak odağında sistol ile eş zamanlı holosistolik pürüzlü üfürüm (Grade 4/6). Çalkantı sesi YOKTUR. Akciğer oskültasyonunda vesiküler sesler sertleşmiş."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testlerinin tamamı NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Retikulum ağrı testlerinin tamamı NEGATİF (-). Eklem palpasyonunda sıcaklık ve ağrı (+)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "anemi", "pp/f"],
-                "content": "Eritrosit (RBC): 3.9 x10⁶/µL (Anemi) | Hemoglobin (Hb): 7.2 g/dL | Hematokrit (PCV): %22 | Lökosit (WBC): 26.8 x10³/µL (Şiddetli Lökositoz) | Nötrofil: %82 | Plazma Fibrinojeni: 1150 mg/dL | PP/F Oranı: 5.8 (<10 - Aktif Şiddetli Yangı)."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 4.1 x10⁶/µL | Hb: 7.2 g/dL | PCV: %22 (Rejeneratif olmayan anemi) | WBC: 28.6 x10³/µL (Şiddetli nötrofili ve sola kayma) | Plazma Fibrinojeni: 980 mg/dL | PP/F: 8.1."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
-                "content": "AST: 142 U/L | GGT: 38 U/L | ALT: 28 U/L | ALP: 160 U/L | CK: 180 U/L | Kardiyak Troponin I: 0.85 ng/mL (Yüksek - Miyokardiyal tutulum/hasar)."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 110 U/L | GGT: 35 U/L | CK: 240 U/L | LDH: 890 U/L | Kardiyak Troponin I: 2.45 ng/mL (Yüksek endokardit/miyokardit hasarı)."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 42 mg/dL | Kreatinin: 1.6 mg/dL | Glikoz: 72 mg/dL | Total Bilirubin: 0.9 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 45 mg/dL | Serum Kreatinin: 2.1 mg/dL (Septik mikrotrombüslere bağlı sekonder renal azotemi) | Glikoz: 68 mg/dL | Total Bilirubin: 0.9 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 8.8 g/dL | Albümin: 2.2 g/dL (Hipoalbüminei) | Globülin: 6.6 g/dL (Şiddetli Hipergamaglobulinemi) | Glutaraldehit Testi: 1 dakikada pozitif pıhtılaşma."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 88 g/L | Albümin: 2.4 g/dL | Globülin: 6.4 g/dL | Glutaraldehit Pıhtılaşma Süresi: 2.0 dakika | SAA: 620 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 136 mmol/L | Potasyum (K⁺): 3.7 mmol/L | Klor (Cl⁻): 96 mmol/L | Kalsiyum (Ca²⁺): 8.2 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 135 mmol/L | K⁺: 4.1 mmol/L | Cl⁻: 98 mmol/L | Ca²⁺: 8.0 mg/dL | İnk. Fosfor: 5.1 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.34 | pO₂: 68 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 21.5 mmol/L | Baz Açığı: -3.2 mmol/L | Laktat: 3.1 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.34 | pO₂: 68 mmHg | pCO₂: 38 mmHg | HCO₃⁻: 20.1 mmol/L | Baz Açığı (BE): -4.5 mmol/L (Metabolik Asidoz) | Laktat: 3.4 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "hematüri", "sediment", "böbrek", "emboli"],
-                "content": "İdrar Dansitesi: 1.022 | İdrar pH: 7.0 | Proteinüri: +2 | Mikrohematüri: +2 (Aşırı eritrosit - Septik Emboli / Fokal Glomerulonefrit) | Mikroskopik Sediment: Bol taze eritrosit ve granüler silindirler."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "mikrohematüri", "sediment"],
+                "content": "İdrar pH: 6.5 | Proteinüri: (+3) | Mikrohematüri: (+2) | İdrar sedimentinde bozulmamış eritrositler ve lökosit silindirleri."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Ekokardiyografi",
-                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "bakteri", "vejetasyon", "kapak"],
-                "content": "Ekokardiyografi (Sağ Interkostal Pencere): Triküspid kapak yaprakçıkları üzerinde 3.5 cm çapında karnabahar görünümünde hiperekojen vejetatif kitle (vegetation). Kan Kültürü: Trueperella pyogenes / Streptococcus dysgalactiae üretilmiştir."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["ultrason", "ekokardiyografi", "kültür", "bakteri"],
+                "content": "Ekokardiyografi: Trikuspid ve mitral kapak yaprakçıklarında 2.5 cm çapında karnabahar görünümünde vejetatif nodüler vejetasyonlar. Tekrarlayan Kan Kültürü: Trueperella pyogenes üremesi."
             }
         }
     },
     "Vaka C (Zümrüt)": {
         "kod": "VAKA_C",
-        "tanim": "Cor Pulmonale / Yüksek Rakım Hastalığı (Brisket Disease)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 460 kiloluk Zümrüt isimli düvemizi 1 ay önce Toros dağlarındaki yüksek yaylaya (rakım 2400 m) çıkardık. Hayvanın gerdanı ve bacak arası su topladı, gözleri fırladı. Ateşi yok ama azıcık yürüyünce nefes nefese kalıyor...'",
+        "sikayet": "Gerdan bölgesinde soğuk hamur ödem, çabuk tıkanma, efor dispnesi ve siyanoz.",
+        "makroskopik_gorsel": {"fig": "CorPulmonale", "title": "Gerdan Ödemi & Siyanoz", "file": "gorseller/cor_pulmonale_odemi.jpg"},
+        "kesin_tani": "Cor Pulmonale (Yüksek Rakım Hastalığı / High Altitude Disease / Brisket Disease)",
+        "ayirici_tani": "TRP (Ağrı testleri - , su çalkantı sesi - , ateş - , lökositoz - , yüksek rakım sevk öyküsü +).",
+        "tedavi": "Hayvanın anında düşük rakıma (ovaya) nakledilmesi, Oksijen desteği, Furosemid (0.5-1 mg/kg IV), Düşük sodyumlu rasyon. Nakil imkanı yoksa Terapötik Flebotomi (Kan alma).",
+        "kontrendike": "Rakımda tutmaya devam etmek ve HAYVANI SIKIŞTIRIP KOŞTURMAK (Akut sağ kalp kollapsı ve ani ölüm!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "ot", "mera", "yayla"],
-                "content": "Yayla merasında otlamaktadır. Ek yoğun yem verilmemektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mera", "ot"],
+                "content": "Yayla merasında otlatılmaktadır. Toksik bitki öyküsü belirlenmemiştir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "yükseklik", "dağ"],
-                "content": "1 ay önce Ceyhan ovasından (rakım 50 m) Toros dağlarındaki yüksek yaylaya (rakım 2400 m) nakledilmiştir. Yüksek hipobarik hipoksiye maruz kalmıştır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil", "dağ", "yükseklik"],
+                "content": "Toros Dağları Pozantı yaylasına (rakım 2400 metre) 3 hafta önce sevk edilmiştir (Hipobarik hipoksi ortamı!)."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "geçirdi"],
-                "content": "Geçmişinde enfeksiyöz veya mekanik hastalık kaydı yoktur."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
+                "content": "Geçmişinde kaydedilmiş kardiyovasküler veya solunumsal enfeksiyon öyküsü yoktur."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi"],
-                "content": "Efor sarf ettiğinde çabuk yoruluyor ve yemeyi bırakıyor. Dinlenirken az miktarda merada otluyor."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "hiporeksi"],
+                "content": "İştah hafif azalmış (Hiporeksi), efor sarf ettiğinde çabuk tıkanmaktadır."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "ödem", "gerdan"],
-                "content": "Vücut Sıcaklığı: 38.6 °C (TAMAMEN NORMAL) | Kalp Frekansı: 96 atım/dk | Solunum Frekansı: 46 nefes/dk (Dispneik) | Mukoza: Siyanotik/Koyu pembe | CRT: 2.2 saniye | Gerdan, göğüs altı ve ventral karın bölgesinde geniş soğuk hamur ödem, Vena jugularis aşırı dolgun ve stazlı."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "siyanoz", "ödem", "jugular"],
+                "content": "Vücut Sıcaklığı: 38.6 °C (TAMAMEN NORMAL) | Kalp Frekansı: 96 atım/dk | Solunum Frekansı: 48 nefes/dk (Takipne) | Mukozalar: Siyanotik (Morumsu) | CRT: 2.8 saniye | Gerdan ve göğüs altında soğuk hamur ödem | Vena jugularis stazı +."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "hiperdinamik", "rall"],
-                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri. Herhangi bir perikardiyal çalkantı sesi veya endokardiyal üfürüm YOKTUR. Akciğer Oskültasyonu: Veziküler solunum sesleri hafif sertleşmiş."
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "akciğer"],
+                "content": "Kalp Oskültasyonu: Hiperdinamik güçlü kalp sesleri duyulmaktadır. Üfürüm veya su çalkantı sesi YOKTUR. Akciğer oskültasyonunda ventral veziküler seslerde hafif artış."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testlerinin tamamı NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Retikulum ağrı testlerinin tamamı NEGATİF (-)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "hematokrit", "polisitemi", "pp/f"],
-                "content": "Eritrosit (RBC): 10.8 x10⁶/µL (Şiddetli Kompenzatuvar Polisitemi) | Hemoglobin (Hb): 17.2 g/dL | Hematokrit (PCV): %54 (Aşırı Yüksek) | Lökosit (WBC): 7.2 x10³/µL (TAMAMEN NORMAL) | Plazma Fibrinojeni: 320 mg/dL (NORMAL) | PP/F Oranı: 22.8 (>15 - Yangı Yoktur)."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "polisitemi", "fibrinojen"],
+                "content": "RBC: 10.8 x10⁶/µL (Sekonder Mutlak Polisitemi!) | Hb: 17.2 g/dL | PCV: %54 (Aşırı polisitrik) | WBC: 7.2 x10³/µL (Yangı yok, tamamen normal) | Plazma Fibrinojeni: 320 mg/dL (Normal) | PP/F Oranı: 22.8."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh"],
-                "content": "AST: 68 U/L (Normal) | GGT: 18 U/L (Normal) | ALT: 22 U/L | ALP: 95 U/L | CK: 110 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 68 U/L | GGT: 22 U/L | ALT: 18 U/L | CK: 95 U/L | LDH: 450 U/L | Kardiyak Troponin I: 0.12 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 18 mg/dL | Kreatinin: 0.9 mg/dL | Glikoz: 64 mg/dL | Total Bilirubin: 0.6 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 18 mg/dL | Serum Kreatinin: 0.9 mg/dL | Kan Glikozu: 75 mg/dL | Total Bilirubin: 0.6 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 7.3 g/dL | Albümin: 3.2 g/dL | Globülin: 4.1 g/dL | Glutaraldehit Pıhtılaşma Testi: 12 dakikada NEGATİF (Yangı bulunmamaktadır)."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 74 g/L | Albümin: 3.3 g/dL | Globülin: 4.1 g/dL | Glutaraldehit Pıhtılaşma Süresi: >15 dakika (Normal) | SAA: 12 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 140 mmol/L | Potasyum (K⁺): 4.2 mmol/L | Klor (Cl⁻): 102 mmol/L | Kalsiyum (Ca²⁺): 9.4 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 138 mmol/L | K⁺: 4.2 mmol/L | Cl⁻: 102 mmol/L | Ca²⁺: 9.2 mg/dL | İnk. Fosfor: 4.8 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "hipoksi"],
-                "content": "Kan pH: 7.36 | pO₂: 48 mmHg (Şiddetli Arteriyel/Venöz Hipoksi) | pCO₂: 42 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı: -0.8 mmol/L | Laktat: 1.5 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat", "hipoksi"],
+                "content": "Kan pH: 7.36 | pO₂: 48 mmHg (Şiddetli Doku Hipoksisi / Hipobarik hipoksi!) | pCO₂: 42 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı (BE): -0.8 mmol/L | Laktat: 1.8 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "ketonüri", "bilirubinüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.028 | İdrar pH: 8.0 | Proteinüri: Negatif | Glikozüri: Negatif | Ketonüri: Negatif | Bilirubinüri: Negatif | Mikrohematüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.018 | İdrar pH: 7.5 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Ekokardiyografi",
-                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "bakteri", "pulmoner", "sağ ventrikül"],
-                "content": "Ekokardiyografi: Sağ ventrikül serbest duvar kalınlığında belirgin artış (Sağ Ventrikül Hipertrofisi), pulmoner arter çapında vazokonstriksiyona sekonder belirgin genişleme. Perikard ve kanda Bakteriyel Üreme YOKTUR (Steril)."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["ultrason", "usg", "ekokardiyografi", "kültür", "bakteri"],
+                "content": "Ekokardiyografi: Sağ ventrikül serbest duvar kalınlığında belirgin artış (Sağ Kalp Hipertrofisi), pulmoner arter çapında genişleme. Perikardiyosentez: Berrak steril sıvı, kültür negatif."
             }
         }
     },
     "Vaka D (Yiğit)": {
         "kod": "VAKA_D",
-        "tanim": "Vena Cava Caudalis Trombozu Sendromu (VCCT)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 620 kiloluk Yiğit isimli besi tosunumuz padoğunda aniden ağzından ve burnundan foşur foşur fışkırır tarzda parlak kırmızı kan akıtmaya başladı! Hayvanın gözleri bembeyaz oldu, dışkısı da zift gibi simsiyah çıkıyor...'",
+        "sikayet": "Burun deliklerinden ve ağızdan fışkırır tarzda taze parlak kırmızı kan gelmesi (hemoptizi) ve katran gibi siyah dışkı yapma (melena).",
+        "makroskopik_gorsel": {"fig": "VCCT", "title": "Burundan Ağızdan Fışkıran Kan & Hemoptizi", "file": "gorseller/vcct_hemoptizi.jpg"},
+        "kesin_tani": "Vena Cava Caudalis Trombozu (VCCT / Hepatik Apse & Pulmoner Anevrizma Ruptürü)",
+        "ayirici_tani": "TRP ve Endokardit (VCCT'de fışkırır tarzda hemoptizi ve melena patognomoniktir).",
+        "tedavi": "Prognozu son derece kötüdür (Prognozu infaust). Acil insani kesim veya kan transfüzyonu, destekleyici hemostatik tedavi (K3 vitamini, Traneksamik asit). Korumada Rumen Asidozu önlenmelidir.",
+        "kontrendike": "Kanamayı artıran damar genişletici ve antikoagülan ilaçlar.",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "karbonhidrat", "mısır", "arpa", "besi", "kaba"],
-                "content": "18 aylık besi danasıdır. Yoğun mısır ve arpa kırması ağırlıklı, kaba yemi aşırı yetersiz yüksek nişastalı besi rasyonu verilmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mısır", "arpa", "nişasta", "asidoz"],
+                "content": "18 aylık besi danasıdır. Yoğun mısır ve arpa kırması ağırlıklı, kaba yemi yetersiz yüksek nişastalı besi rasyonu verilmektedir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sevk", "nakil", "kamyon", "sürü"],
-                "content": "Besi padoğunda barındırılmaktadır. Rakım değişikliği yoktur."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Besi padoğunda barındırılmaktadır. Coğrafi nakil öyküsü yoktur."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "geçirdi", "asidoz", "şişkinlik", "timpani", "rumenitis"],
-                "content": "Geçmişinde tekrarlayan subakut rumen asidozu (SARA / yem çarpması) ve kronik hafif rumen timpani (şişkinlik) öyküsü vardır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "asidoz", "şişkinlik", "sara", "rüminitis"],
+                "content": "Geçmişinde tekrarlayan subakut rumen asidozu (SARA), yem çarpması ve rüminitis öyküsü mevcuttur."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi"],
-                "content": "Akut kan krizinden sonra tam anoreksi ve halsizlik."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "anoreksi"],
+                "content": "Şiddetli kan kaybı ve halsizliğe bağlı komple anoreksi, çökme."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "hemoptizi", "melena", "kan"],
-                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 118 atım/dk (Aşırı Taşikardi) | Solunum Frekansı: 52 nefes/dk | Ağız/Burun: Köpüklü taze parlak kırmızı kan fışkırması (Hemoptizi) | Mukozalar: Bembeyaz (Ağır Anemi) | CRT: 4.0 saniye | Dışkı: Siyah katran kıvamında (Melena)."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "hemoptizi", "melena"],
+                "content": "Vücut Sıcaklığı: 39.2 °C | Kalp Frekansı: 118 atım/dk | Solunum Frekansı: 52 nefes/dk | Mukozalar: Bembeyaz (Ağır kan kaybı anemisi!) | CRT: 4.0 saniye | Ağız ve burundan köpüklü taze kan fışkırması (Hemoptizi) | Dışkı: Siyah katran kıvamında (Melena)."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "üfürüm", "rall", "hışırtı", "akciğer"],
-                "content": "Kalp Oskültasyonu: Taşikardik, zayıf düşen kalp sesleri. Akciğer Oskültasyonu: Akciğer alanlarında yaygın kaba raller ve kan pıhtılarına sekonder hışırtı sesleri."
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "rall", "akciğer"],
+                "content": "Kalp Oskültasyonu: Taşikardik zayıf düştü sesleri. Akciğer Oskültasyonu: Bilateral yaygın kaba raller ve hışırtı sesleri."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testleri NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Retikulum ağrı testleri NEGATİF (-)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "anemi", "pp/f"],
-                "content": "Eritrosit (RBC): 2.1 x10⁶/µL (Kritik Masif Kan Kaybı Anemisi) | Hemoglobin (Hb): 4.2 g/dL | Hematokrit (PCV): %12 (Acil Transfüzyon Eşiği!) | Lökosit (WBC): 21.5 x10³/µL | Plazma Fibrinojeni: 1050 mg/dL | PP/F Oranı: 7.23."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "anemi", "fibrinojen"],
+                "content": "RBC: 2.1 x10⁶/µL (Kritik Kan Kaybı Anemisi!) | Hb: 4.2 g/dL | PCV: %12 (Acil Transfüzyon Eşiği!) | WBC: 21.5 x10³/µL | Plazma Fibrinojeni: 1050 mg/dL | PP/F: 7.23."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "ldh"],
-                "content": "AST: 210 U/L (Karaciğer apsesine sekonder parankim hasarı) | GGT: 68 U/L (Safra kanalı/karaciğer) | ALT: 45 U/L | ALP: 210 U/L | CK: 160 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 210 U/L (Karaciğer parankim hasarı) | GGT: 68 U/L | ALT: 45 U/L | ALP: 120 U/L | CK: 130 U/L | LDH: 980 U/L | Troponin I: 0.28 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 42 mg/dL | Kreatinin: 1.6 mg/dL | Glikoz: 88 mg/dL | Total Bilirubin: 1.2 mg/dL | Direkt Bilirubin: 0.5 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 42 mg/dL | Serum Kreatinin: 1.6 mg/dL | Kan Glikozu: 88 mg/dL | Total Bilirubin: 1.2 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 7.6 g/dL | Albümin: 2.6 g/dL | Globülin: 5.0 g/dL | Glutaraldehit Testi: 2 dakikada pozitif pıhtılaşma."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 76 g/L | Albümin: 2.2 g/dL | Globülin: 5.4 g/dL | Glutaraldehit Pıhtılaşma Süresi: 3.0 dakika | SAA: 380 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 134 mmol/L | Potasyum (K⁺): 3.5 mmol/L | Klor (Cl⁻): 94 mmol/L | Kalsiyum (Ca²⁺): 7.9 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 134 mmol/L | K⁺: 3.6 mmol/L | Cl⁻: 96 mmol/L | Ca²⁺: 7.8 mg/dL | İnk. Fosfor: 4.2 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be", "laktat"],
-                "content": "Kan pH: 7.24 (Metabolik Asidoz) | pO₂: 52 mmHg | pCO₂: 50 mmHg | HCO₃⁻: 18.5 mmol/L | Baz Açığı (BE): -6.2 mmol/L | Laktat: 4.2 mmol/L (Şiddetli Doku Perfüzyon Bozukluğu)."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.24 | pO₂: 52 mmHg | pCO₂: 50 mmHg | HCO₃⁻: 18.5 mmol/L | Baz Açığı (BE): -6.2 mmol/L (Metabolik Asidoz) | Laktat: 4.2 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "hematüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.024 | İdrar pH: 6.5 | Proteinüri: +1 | Mikrohematüri: Negatif (Mikroskopik eritrosit yok - kanama böbrek/üriner sistemden değil, akciğer yırtılmasından kaynaklanıp yutularak dışkıya geçmiştir)."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar pH: 6.8 | Proteinüri: (+1) | Ürobilinojen hafif pozitif | Sedimentte renal silindir yok."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Ultrasonografi",
-                "keywords": ["ultrason", "usg", "ekokardiyografi", "karaciğer", "apse", "vena cava", "trombüs", "arter", "anevrizma"],
-                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde 6 cm çapında kılıflı apse odağı (Hepatic Abscess), Vena Cava Caudalis lümeninde tıkayıcı trombüs ekojenitesi. Torakal USG: Pulmoner arter çevresinde hematom ve anevrizma yırtılması alanları."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["ultrason", "usg", "karaciğer", "apse", "vena cava", "trombüs"],
+                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde 6 cm çapında kılıflı apse odağı (Hepatik Apse) ve Vena Cava Caudalis lümeninde tıkayıcı ekojenik trombüs kütlesi. Torakal USG: Pulmoner arter çevresinde hematom ve anevrizma alanları."
             }
         }
     },
     "Vaka E (Kudret)": {
         "kod": "VAKA_E",
-        "tanim": "Trikofiti / Dermatophytosis (Trichophyton verrucosum)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 220 kiloluk Kudret isimli danamızın baş, göz çevresi ve boyun bölgesinde yuvarlak yuvarlak, gri kireç gibi kabuklar çıktı. Tüyleri döküldü ama hiç kaşınmıyor, ne bir ateş var ne keyifsizlik...'",
-        "makroskopik_gorsel": {
-            "fig": "Figure 1.2-1",
-            "title": "Klinik Mantar Lezyonu (Baş ve Göz Çevresi)",
-            "file": "gorseller/figure_1_2_1.jpg",
-            "desc": "Göz çevresi, baş ve boyunda dairesel, grimsi-beyaz kireç benzeri kabarık kabuklanma ve alopezi (tüy kaybı)."
-        },
+        "sikayet": "Baş, göz çevresi, kulak kaidesi ve boyunda dairesel, kepekli, gri-beyaz kireçimsi kabuklanma ve alopezi (tüy dökülmesi).",
+        "makroskopik_gorsel": {"fig": "Figure 1.2-1", "title": "Klinik Mantar Lezyonu", "file": "gorseller/figure_1_2_1.jpg"},
+        "kesin_tani": "Trikofiti (Dermatophytosis / Ringworm – Trichophyton verrucosum)",
+        "ayirici_tani": "Sarkoptik Uyuz (Trikofitide kaşıntı yoktur/azdır, lezyonlar dairesel kireçimsi kabukludur; uyuzda şiddetli kaşıntı ve deride kalınlaşma vardır).",
+        "tedavi": "Lokal %2-4 Tropikal Antifungal (Enilkonazol / Mikonazol solüsyonu ile banyo/püskürtme), Sistemik Vitamin A-D3-E ve Çinko takviyesi, Barınak dezenfeksiyonu ve güneşlendirme.",
+        "kontrendike": "Sistemik Kortikosteroid kullanımı (Fungal enfeksiyonun tüm sürüye yayılmasına neden olur!). Kabukları kuru kuru kazımak (Zoonoz bulaş riski!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "ot", "saman", "vitamin", "a vitamini"],
-                "content": "A Vitamini ve mineral bakımından yetersiz, rutubetli ve güneş görmeyen kapalı pedokta beslenmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "vitamin", "çinko"],
+                "content": "Standart besi rasyonu verilmektedir. A vitamini ve minerallerce zenginleştirilmemiştir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü", "ahır", "kalabalık"],
-                "content": "Kapalı, nemli ve kalabalık genç dana padoğunda barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Nemli, havalandırması yetersiz kapalı dana padoğunda barındırılmaktadır."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
                 "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
-                "content": "Sütten kesim sonrası bağışıklık stresi yaşamıştır."
+                "content": "Sürüdeki diğer 5 danada benzer dairesel tüy dökülmeleri başlamıştır (Bulaşıcı temas öyküsü!)."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş"],
-                "content": "İştah ve geviş getirme TAMAMEN NORMALdir."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su"],
+                "content": "İştah ve genel durum tamamen normaldir."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "deri", "kabuk", "kaşıntı"],
-                "content": "Vücut Sıcaklığı: 38.7 °C (NORMAL) | Kalp Frekansı: 76 atım/dk | Solunum Frekansı: 24 nefes/dk | Mukozalar: Pembe | CRT: 1.5 saniye | Deri Muayenesi: Baş, göz çevresi ve boyunda dairesel, gri-beyaz kireçimsi kabuklu alopezik lezyonlar. Kaşıntı YOKtur veya minimaldir."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "kabuk", "döküntü"],
+                "content": "Vücut Sıcaklığı: 38.5 °C (Normal) | Kalp Frekansı: 72 atım/dk | Solunum Frekansı: 24 nefes/dk | Mukozalar: Pembe | CRT: 1.5 saniye | Baş, göz çevresi ve boyunda dairesel, grimsi-beyaz kireçimsi kabuklanma ve alopezi. Kaşıntı yok."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp ve akciğer oskültasyonu TAMAMEN NORMALdir."
+                "content": "Kalp ve akciğer oskültasyon sesleri tamamen normaldir."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testleri NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Ağrı veya duyarlılık tespit edilmemiştir."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Eritrosit (RBC): 6.8 x10⁶/µL | Hemoglobin (Hb): 11.2 g/dL | Hematokrit (PCV): %35 | Lökosit (WBC): 8.4 x10³/µL (NORMAL) | Plazma Fibrinojeni: 350 mg/dL (NORMAL)."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 6.8 x10⁶/µL | Hb: 11.5 g/dL | PCV: %35 | WBC: 8.4 x10³/µL (Normal) | Eozinofil: %2 (Normal) | Plazma Fibrinojeni: 280 mg/dL."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 62 U/L | GGT: 21 U/L | ALT: 25 U/L | ALP: 115 U/L | CK: 95 U/L (Tüm organ enzim değerleri normal sınırlardadır)."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 48 U/L | GGT: 18 U/L | ALT: 15 U/L | CK: 70 U/L | LDH: 380 U/L | Troponin I: <0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 15 mg/dL | Kreatinin: 0.8 mg/dL | Glikoz: 68 mg/dL | Total Bilirubin: 0.4 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 15 mg/dL | Serum Kreatinin: 0.8 mg/dL | Kan Glikozu: 78 mg/dL | Total Bilirubin: 0.3 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 6.8 g/dL | Albümin: 3.2 g/dL | Globülin: 3.6 g/dL | Glutaraldehit Testi: 15 dakikada NEGATİF."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 72 g/L | Albümin: 3.5 g/dL | Globülin: 3.7 g/dL | Glutaraldehit: >15 dakika | SAA: 8 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 139 mmol/L | Potasyum (K⁺): 4.4 mmol/L | Klor (Cl⁻): 101 mmol/L | Kalsiyum (Ca²⁺): 9.2 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 140 mmol/L | K⁺: 4.4 mmol/L | Cl⁻: 101 mmol/L | Ca²⁺: 9.5 mg/dL | İnk. Fosfor: 5.2 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.38 | pO₂: 88 mmHg | pCO₂: 40 mmHg | HCO₃⁻: 24.2 mmol/L | Baz Açığı: +0.2 mmol/L (Tamamen normal)."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.40 | pO₂: 88 mmHg | pCO₂: 40 mmHg | HCO₃⁻: 24.2 mmol/L | Baz Açığı (BE): +0.2 mmol/L | Laktat: 1.0 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | İdrar pH: 8.0 | Proteinüri: Negatif | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.020 | pH: 7.8 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "MIKROSKOPI_KAZINTI": {
-                "name": "Deri Kazıntısı & Mikroskopik Mantar Teşhisi",
-                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "koh", "mantar", "artrospor", "lam", "spor"],
-                "gorsel": {
-                    "fig": "Figure 1.2-11",
-                    "title": "Mikroskopik Mantar Sporu (%10 KOH Hazırlığı)",
-                    "file": "gorseller/figure_1_2_11.jpg",
-                    "desc": "%10 KOH ile muamele edilmiş deri kazıntısında kıl şaftını saran küresel Trichophyton verrucosum ektotriks artrospor dizilimi (40x)."
-                },
-                "content": "%10 KOH ile hazırlanan deri kazıntısında kırık kıl şaftının etrafını zırh gibi saran küresel Trichophyton verrucosum ektotriks artrospor zincirleri belirgin olarak teşhis edilmiştir."
+                "name": "🔬 Deri Kazıntısı & Mikroskopik Mantar Teşhisi",
+                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "koh", "mantar", "artrospor", "lam"],
+                "gorsel": {"fig": "Figure 1.2-11", "title": "Mikroskopik Mantar Sporu (%10 KOH Hazırlığı)", "file": "gorseller/figure_1_2_11.jpg"},
+                "content": "%10 KOH ile hazırlanan deri kazıntısında kıl şaftını dıştan zırh gibi saran küresel Trichophyton verrucosum ektotriks artrospor zincirleri belirgin olarak izlenmiştir."
             }
         }
     },
     "Vaka F (Nazar)": {
         "kod": "VAKA_F",
-        "tanim": "Sarkoptik Uyuz / Scabies (Sarcoptes scabiei var. bovis)",
-        "sikayt": "Yetiştirici İfadesi: 'Hocam 380 kiloluk Nazar isimli ineğimiz dur durak bilmeden kendini demirlere, duvarlara sürtüyor! Boynu ve kulaklarının arkası fil derisi gibi kalınlaştı, kanatana kadar kaşıyor, kaşınmaktan yem yemeyi unuttu...'",
-        "makroskopik_gorsel": {
-            "fig": "Figure 1.3-13 & 1.3-15",
-            "title": "Klinik Uyuz Lezyonu (Deride Kalınlaşma ve Likenifikasyon)",
-            "file": "gorseller/figure_1_3_13.jpg",
-            "desc": "Kulak kepçesi, boyun ve sırtta derinin fil derisi gibi kalınlaşması (likenifikasyon), kaşıntı ekskoryasyonları ve kepekli döküntü."
-        },
+        "sikayet": "Kulak kepçesi, boyun, sırt ve göğüs derisinde şiddetli kaşıntı, deride kalınlaşma, kıvrımlaşma (likenifikasyon) ve tüy kaybı.",
+        "makroskopik_gorsel": {"fig": "Figure 1.3-13 & 1.3-15", "title": "Klinik Uyuz Lezyonu", "file": "gorseller/figure_1_3_13.jpg"},
+        "kesin_tani": "Sarkoptik Uyuz (Sarcoptic Mange / Scabies – Sarcoptes scabiei var. bovis)",
+        "ayirici_tani": "Trikofiti (Mantarda kaşıntı yoktur, uyuzda şiddetli pruritus ve likenifikasyon vardır), Psoroptik Uyuz (Kulak dışı gövde odağı).",
+        "tedavi": "Parenteral İvermektin / Doramektin (0.2 mg/kg SC, 14 gün arayla 2 doz) veya Acaricide banyosu (Amitraz), Sürüdeki tüm temaslı hayvanların eş zamanlı tedavisi.",
+        "kontrendike": "Tek doz enjeksiyon yapıp bırakmak (Yumurtadan çıkan yeni akarlar hastalığı nüksettirir!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "ot", "saman"],
-                "content": "Standart kaba ve kesif yem verilmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mera"],
+                "content": "Saman ve yetersiz mera ağırlıklı besleme yapılmaktadır."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü", "ahır", "bulaşma"],
-                "content": "Sürüye yeni katılan dışarıdan gelme bir inekle temas öyküsü vardır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Hijyeni zayıf, kalabalık kapalı barınakta barındırılmaktadır."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
                 "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
-                "content": "Geçmişinde kronik iç hastalık öyküsü yoktur. Şiddetli kaşıntı 2 hafta önce başlamıştır."
+                "content": "Sürekli duvarlara ve demirlere kaşınma öyküsü vardır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi", "hiporeksi"],
-                "content": "Huzursuzluk ve sürekli kaşınma nedeniyle belirgin hiporeksi (iştah azalması)."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "hiporeksi"],
+                "content": "Sürekli kaşınma huzursuzluğuna bağlı iştah dalgalı (Hiporeksi), zayıflama."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "deri", "kaşıntı", "likenifikasyon"],
-                "content": "Vücut Sıcaklığı: 38.9 °C | Kalp Frekansı: 82 atım/dk | Solunum Frekansı: 28 nefes/dk | Mukozalar: Pembe | CRT: 1.8 saniye | Deri Muayenesi: Baş, kulak, boyun ve sırtta derinin şiddetli kalınlaşması (likenifikasyon), oluklaşma, ekskoryasyon (kaşıntı tırnak izleri) ve kepeneklenme. ŞİDDETLİ KAŞINTI +."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "kaşıntı", "likenifikasyon"],
+                "content": "Vücut Sıcaklığı: 38.8 °C | Kalp Frekansı: 84 atım/dk | Solunum Frekansı: 28 nefes/dk | Mukozalar: Pembe | CRT: 1.8 saniye | Deride şiddetli kalınlaşma, kıvrımlaşma (likenifikasyon), eksforyasyon kanamaları ve döküntü."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp ve akciğer oskültasyonu NORMALdir."
+                "content": "Kalp ve akciğer oskültasyon sesleri normaldir."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testleri NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Palpasyonda şiddetli kaşınma refleksi ve huzursuzluk (+)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "eozinofil", "eozinofili"],
-                "content": "Eritrosit (RBC): 6.2 x10⁶/µL | Hemoglobin (Hb): 10.8 g/dL | Hematokrit (PCV): %33 | Lökosit (WBC): 12.8 x10³/µL | Nötrofil: %52 | Eozinofil: %14 (Aşırı Eozinofili - Paraziter/Paraziter Allerjik Yanıt) | Plazma Fibrinojeni: 480 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "eozinofil"],
+                "content": "RBC: 5.8 x10⁶/µL | Hb: 9.8 g/dL | PCV: %30 | WBC: 14.8 x10³/µL | Eozinofil: %14 (Belirgin Eozinofili - Paraziter/alerjik deri yanıtı!) | Fibrinojen: 420 mg/dL."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 72 U/L | GGT: 24 U/L | ALT: 28 U/L | ALP: 120 U/L | CK: 130 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 55 U/L | GGT: 22 U/L | ALT: 18 U/L | CK: 110 U/L | LDH: 420 U/L | Troponin I: <0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 18 mg/dL | Kreatinin: 0.9 mg/dL | Glikoz: 62 mg/dL | Total Bilirubin: 0.5 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 18 mg/dL | Serum Kreatinin: 0.9 mg/dL | Kan Glikozu: 70 mg/dL | Total Bilirubin: 0.4 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 7.2 g/dL | Albümin: 3.1 g/dL | Globülin: 4.1 g/dL | Glutaraldehit Testi: 10 dakikada NEGATİF."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 78 g/L | Albümin: 3.1 g/dL | Globülin: 4.7 g/dL | Glutaraldehit: 8 dakika | SAA: 45 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 138 mmol/L | Potasyum (K⁺): 4.1 mmol/L | Klor (Cl⁻): 99 mmol/L | Kalsiyum (Ca²⁺): 9.0 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 139 mmol/L | K⁺: 4.2 mmol/L | Cl⁻: 100 mmol/L | Ca²⁺: 9.1 mg/dL | İnk. Fosfor: 4.9 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.37 | pO₂: 86 mmHg | pCO₂: 41 mmHg | HCO₃⁻: 23.8 mmol/L | Baz Açığı: -0.2 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.39 | pO₂: 85 mmHg | pCO₂: 41 mmHg | HCO₃⁻: 23.8 mmol/L | Baz Açığı (BE): -0.4 mmol/L | Laktat: 1.2 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.024 | İdrar pH: 8.0 | Proteinüri: Negatif | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.022 | pH: 7.6 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "MIKROSKOPI_KAZINTI": {
-                "name": "Derin Deri Kazıntısı & Akar Mikroskopisi",
-                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "akar", "uyuz", "mineral yağ", "sarcoptes", "lam"],
-                "gorsel": {
-                    "fig": "Figure 1.3-18",
-                    "title": "Mikroskopik Sarcoptes Scabiei Akari",
-                    "file": "gorseller/figure_1_3_18.jpg",
-                    "desc": "Derin deri kazıntısında mineral yağ altında tespit edilen canlı ergin Sarcoptes scabiei akarı (10x-40x)."
-                },
-                "content": "Kapiller kanama görülünceye kadar alınan derin deri kazıntısında mineral yağ altında canlı Sarcoptes scabiei var. bovis ergin akarları, oval yumurtalar ve karakteristik siyah dışkı peletleri (scybala) tespit edilmiştir."
+                "name": "🔬 Derin Deri Kazıntısı & Akar Mikroskopisi",
+                "keywords": ["mikroskop", "kazıntı", "deri kazıntısı", "akar", "uyuz", "mineral yağ", "sarcoptes"],
+                "gorsel": {"fig": "Figure 1.3-18", "title": "Mikroskopik Sarcoptes Scabiei Akari", "file": "gorseller/figure_1_3_18.jpg"},
+                "content": "Kapiller kanama görülünceye kadar alınan derin deri kazıntısında mineral yağ altında tespit edilen canlı ergin Sarcoptes scabiei akarları, yumurtaları ve siyah oval dışkı peletleri (scybala)."
             }
         }
     },
     "Vaka G (Çiçek)": {
         "kod": "VAKA_G",
-        "tanim": "Hepatojen (Sekonder) Fotosensitizasyon",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 450 kiloluk Çiçek isimli ineğimizi yeşil meraya çıkardık. Hayvanın YALNIZCA BEYAZ tüylü deri bölgelerinde, özellikle boyun, omuz ve sırtındaki beyaz alanlarda müthiş bir güneş yanığı ve hamur ödemi gelişti! Boyun bölgesindeki beyaz derisi tabaka tabaka soyuluyor, boynuna dokunmaya kalksak ağrıdan çıldırıyor, siyah derisine ise zerre kadar bir şey olmadı...'",
-        "makroskopik_gorsel": {
-            "fig": "Figure 1.7-35",
-            "title": "Hepatojen Fotosensitizasyon (Boyun ve Beyaz Deri Nekrozu)",
-            "file": "gorseller/figure_1_7_35.jpg",
-            "desc": "Yalnızca boyun, omuz ve sırttaki beyaz (pigmentsiz) deri alanlarında soyulma, hamur ödemi, hipersensitivite ve nekroz; siyah pigmentli derinin tamamen sağlam kalması."
-        },
+        "sikayet": "Yalnızca boyun, omuz ve sırt bölgesindeki beyaz (pigmentsiz) deri alanlarında eritem, hamur ödemi, derinin tabaka halinde soyulması (nekroz/sloughing) ve dokunmaya karşı şiddetli aşırı duyarlılık/ağrı (hipersensitivite).",
+        "makroskopik_gorsel": {"fig": "Figure 1.7-35", "title": "Hepatojen Fotosensitizasyon (Boyun & Sırt Deri Nekrozu)", "file": "gorseller/figure_1_7_35.jpg"},
+        "kesin_tani": "Hepatojen Fotosensitizasyon (Sekonder Güneş Yanığı / Hepatik Kolestaz & Filloeritrin Akümülasyonu)",
+        "ayirici_tani": "Primer Fotosensitizasyon (Karaciğer enzimleri AST/GGT ve bilirubin normaldir; hepatojende AST, GGT ve bilirubin aşırı yüksektir, idrar koyu bira rengindedir).",
+        "tedavi": "Hayvanın derhal KARANLIK / GÖLGE ahıra çekilmesi, Karaciğer koruyucu tedavi (B kompleksi, Metiyonin, Kolin, Dekstroz), Analjezik/Antiinflamatuvar (Flunixin Meglumine 2.2 mg/kg), Klorofil içeren yeşil mera otunun kesilip kuru saman verilmesi.",
+        "kontrendike": "GÜNEŞ IŞIĞINA ÇIKARMAK ve Hepatotoksik ilaçların kullanımı.",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "klorofil", "yeşil ot", "mera", "zehirli ot", "lantana", "mantar"],
-                "content": "Klorofil bakımından zengin taze taze yeşil ot ve otlatma merası tüketilmiştir. Merada sporidesmin veya hepatotoksik bitki içeriği öyküsü vardır."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "mera", "klorofil", "lantana", "küf"],
+                "content": "Yeşil ot ve klorofilden zengin mera otlatması yapılmıştır. Toksik ot ve mantar sporu şüphesi vardır."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü", "mera", "güneş"],
-                "content": "Güneşli merada otlama öyküsü vardır. Dik güneş ışığına maruz kalmıştır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil", "güneş"],
+                "content": "Güneş ışığına dik maruz kalan Ceyhan mera padoğu."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "karaciğer", "sarılık"],
-                "content": "Geçmişte subklinik karaciğer/safra yolu stazı öyküsü bulunmaktadır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
+                "content": "1 hafta önce meraya çıkarıldıktan sonra güneş temasıyla semptomlar aniden şekillenmiştir."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi", "hiporeksi"],
-                "content": "Işıktan kaçma (fotofobi), huzursuzluk ve boyun bölgesindeki şiddetli hipersensitivite nedeniyle belirgin anoreksi."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "anoreksi"],
+                "content": "Şiddetli boyun/omuz derisi ağrısı ve huzursuzluk nedeniyle Anoreksi, gölgeden çıkmak istememe."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "ikter", "sarılık", "crt", "deri", "boyun", "ödem", "hipersensitivite"],
-                "content": "Vücut Sıcaklığı: 39.4 °C | Kalp Frekansı: 92 atım/dk | Solunum Frekansı: 36 nefes/dk | Mukozalar: Belirgin İkterik / Sarılık (Bilirubinüriye bağlı) | CRT: 2.2 saniye | Deri Muayenesi: YALNIZCA BEYAZ (pigmentsiz) deri alanlarında, özellikle boyun, omuz ve sırtta hamur ödemi, derinin sertleşip tabaka halinde soyulması (sloughing/nekroz) ve boyun bölgesinde ŞİDDETLİ HİPERSENSİTİVİTE / DOKUNMA AĞRISI. Siyah deri alanları tamamen NORMAL."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "ikter", "ödem", "hipersensitivite"],
+                "content": "Vücut Sıcaklığı: 39.5 °C | Kalp Frekansı: 98 atım/dk | Solunum Frekansı: 36 nefes/dk | Mukozalar: Belirgin İkterik (Sarı) | CRT: 2.2 saniye | Boyun, omuz ve sırtın pigmentsiz beyaz derisinde dokunmakla aşırı ağrı (hipersensitivite), hamur ödemi, çatlama ve nekrotik soyulma. Siyah deriler sağlam."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp ve akciğer oskültasyonu normal sınırlar içindedir."
+                "content": "Kalp sesleri normofonik, akciğer sesleri hafif veziküler."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "boyun"],
-                "content": "Retikulum ağrı testleri NEGATİF. Ancak boyun ve sırt deri palpasyonunda aşırı ağrı ve refleks yanıtı (+)."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum", "palpasyon"],
+                "content": "Boyun, omuz ve sırt derisine temas edildiğinde hayvan şiddetle tepki verir, tepinir (Kutane hipersensitivite +)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Eritrosit (RBC): 6.1 x10⁶/µL | Hemoglobin (Hb): 10.5 g/dL | Hematokrit (PCV): %32 | Lökosit (WBC): 14.2 x10³/µL (Ilımlı Lökositoz) | Plazma Fibrinojeni: 580 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 6.2 x10⁶/µL | Hb: 10.5 g/dL | PCV: %32 | WBC: 18.2 x10³/µL (Nötrofili) | Plazma Fibrinojeni: 650 mg/dL | PP/F: 11.2."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck", "karaciğer", "safra"],
-                "content": "AST: 280 U/L (Aşırı Yüksek - Karaciğer Parankim Hasarı) | GGT: 185 U/L (Aşırı Yüksek - Kolestaz / Safra Yolu Tıkanması) | ALP: 420 U/L (Yüksek) | ALT: 52 U/L | CK: 140 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin", "karaciğer"],
+                "content": "AST: 280 U/L (Yüksek) | GGT: 185 U/L (Aşırı yüksek - Şiddetli Hepatik Kolestaz!) | ALT: 52 U/L | ALP: 310 U/L | CK: 140 U/L | LDH: 820 U/L | Troponin I: 0.02 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin", "ikter", "filloeritrin"],
-                "content": "Total Bilirubin: 3.8 mg/dL (Aşırı Yüksek - Şiddetli İkter) | Direkt Bilirubin: 1.7 mg/dL | İndirekt Bilirubin: 2.1 mg/dL | BUN: 22 mg/dL | Kreatinin: 1.0 mg/dL | Serum Filloeritrin Düzeyi: AŞIRI YÜKSEK (Safra yolu atılım bozukluğuna sekonder)."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin", "filloeritrin"],
+                "content": "BUN: 28 mg/dL | Serum Kreatinin: 1.2 mg/dL | Kan Glikozu: 65 mg/dL | Total Bilirubin: 4.8 mg/dL (Aşırı Yüksek - Şiddetli İkter!) | Direkt Bilirubin: 3.1 mg/dL | Plazma Filloeritrin Düzeyi: Aşırı Yüksek."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 6.2 g/dL | Albümin: 2.4 g/dL (Karaciğer sentez azalmasına sekonder Hipoalbüminemi) | Globülin: 3.8 g/dL | Glutaraldehit Testi: 6 dakikada pozitif."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 82 g/L | Albümin: 2.7 g/dL | Globülin: 5.5 g/dL | Glutaraldehit: 4 dakika | SAA: 210 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 137 mmol/L | Potasyum (K⁺): 3.8 mmol/L | Klor (Cl⁻): 97 mmol/L | Kalsiyum (Ca²⁺): 8.4 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 136 mmol/L | K⁺: 3.9 mmol/L | Cl⁻: 98 mmol/L | Ca²⁺: 8.5 mg/dL | İnk. Fosfor: 4.6 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.36 | pO₂: 84 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 22.8 mmol/L | Baz Açığı: -1.2 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.37 | pO₂: 82 mmHg | pCO₂: 39 mmHg | HCO₃⁻: 22.1 mmol/L | Baz Açığı (BE): -1.5 mmol/L | Laktat: 1.9 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "bilirubinüri", "çay rengi", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | İdrar pH: 7.5 | Bilirubinüri: +3 (Koyu çay/bira rengi idrar - Patognomonik!) | Proteinüri: +1 | Glikozüri: Negatif | Mikroskopik Sediment: Nadir bilirubin kristalleri ve tübüler epitel hücreleri."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "bilirubinüri", "çay rengi", "sediment"],
+                "content": "İdrar Rengi: Koyu çay / bira renginde | Bilirubinüri: (+3) | Spesifik Gravite: 1.025 | pH: 7.2 | Protein: (+1) | Sedimentte bilirubin kristalleri."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Karaciğer Ultrasonu",
-                "keywords": ["ultrason", "usg", "karaciğer", "safra", "biyopsi"],
-                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde heterojen ekojenite artışı, safra kanallarında dilatasyon ve çamur birikimi. Karaciğer Biyopsisi: Periportal fibrozis, safra kanalı hiperplazisi ve hepatoselüler nekroz."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["ultrason", "usg", "karaciğer", "safra"],
+                "content": "Abdominal Ultrasonografi: Karaciğer parankiminde difüz ekojenite artışı (Hepatik steatoz/nekroz) ve safra kanallarında belirgin genişleme."
             }
         }
     },
     "Vaka H (Ateş)": {
         "kod": "VAKA_H",
-        "tanim": "Akut Allerjik Ürtiker (Kurdeşen)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 510 kiloluk Ateş isimli tosunumuza yeni bir yem rasyonu verdik ve parazit iğnesi yaptık. Aradan iki saat geçmeden tosunun gövdesi, boynu ve omuzları patır patır yuvarlak kabarık plaklarla doldu! Göz kapakları şişti, huzursuzca kıvranıyor...'",
-        "makroskopik_gorsel": {
-            "fig": "Figure 1.5-1",
-            "title": "Akut Ürtiker (Ödem Plakları)",
-            "file": "gorseller/figure_1_5_1.jpg",
-            "desc": "Gövde, boyun ve omuz derisinde aniden beliren dairesel ödemli kabarık ürtiker plakları (urtica/wheal)."
-        },
+        "sikayet": "Gövde, boyun ve omuz derisinde aniden beliren, parmakla basıldığında çukurlaşan (pitting edema), ödemli, kabarık, dairesel/plak benzeri ürtiker lezyonları (urtica/wheals).",
+        "makroskopik_gorsel": {"fig": "Figure 1.5-1", "title": "Akut Ürtiker Ödem Plakları", "file": "gorseller/figure_1_5_1.jpg"},
+        "kesin_tani": "Akut Ürtiker (Kurdeşen / Allerjik Dermatitis / Tip I Hipersensitivite)",
+        "ayirici_tani": "Fotosensitizasyon (Fotosensitizasyonda sadece beyaz deri soyulur ve ikter vardır; ürtikerde tüm vücutta geçici ödem plakları belirir).",
+        "tedavi": "Antihistaminik (Pheniramine Maleate / Tripelennamine 1 mg/kg IM), Ağır vakada Hızlı Etkili Kortikosteroid (Deksametazon 0.1 mg/kg IV/IM), Alerjen etkenin (ilaç/yem) derhal kesilmesi.",
+        "kontrendike": "Gebe hayvanlarda yüksek doz Deksametazon kullanımı (Abortus riski!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "allerji", "protein", "enjeksiyon", "ilaç"],
-                "content": "2 saat önce yeni bir protein konsantresi verilmiş ve parenteral enjeksiyon yapılmıştır."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "alerji", "aşı", "enjeksiyon"],
+                "content": "2 saat önce yeni meraya çıkış, ot değişikliği veya parenteral ilaç/aşı enjeksiyonu öyküsü."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü"],
-                "content": "Besi ahırında barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Çukurova açık süt tesisi."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "allerji"],
-                "content": "Atopik/allerjik reaksiyon geçmişi bulunmaktadır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
+                "content": "Daha önce bilinen kronik deri hastalığı öyküsü yoktur."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi"],
-                "content": "Akut gelişen huzursuzluk nedeniyle yem yemeyi geçici olarak durdurmuştur."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su"],
+                "content": "Hafif huzursuzluk dışında iştah korunmuştur."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "deri", "ürtiker", "plak", "anjiyoödem"],
-                "content": "Vücut Sıcaklığı: 38.8 °C (NORMAL) | Kalp Frekansı: 88 atım/dk | Solunum Frekansı: 32 nefes/dk | Mukozalar: Hiperemik | CRT: 1.6 saniye | Deri Muayenesi: Gövde, boyun ve omuzlarda parmakla basıldığında çukurlaşan (pitting edema), kabarık, dairesel ödem plakları (urtica/wheal) ve göz kapaklarında anjiyoödem."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "urtica", "plak"],
+                "content": "Vücut Sıcaklığı: 38.6 °C (Normal) | Kalp Frekansı: 88 atım/dk | Solunum Frekansı: 32 nefes/dk | Mukozalar: Pembe / hafif ödemli | CRT: 1.6 saniye | Gövde ve boyun derisinde parmakla basılınca çukurlaşan ödemli kabarık plaklar (Urtica)."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp sesleri normal. Akciğerlerde hafif taşipneye bağlı veziküler sesler duyuluyor."
+                "content": "Kalp ve akciğer oskültasyonu normal, üst solunum yolunda hafif hırıltı."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum"],
-                "content": "Retikulum ağrı testleri NEGATİF."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum"],
+                "content": "Plaklara basıldığında çukurlaşır (ödem +), şiddetli ağrı yoktur."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "eozinofil", "eozinofili"],
-                "content": "Eritrosit (RBC): 6.5 x10⁶/µL | Hemoglobin (Hb): 11.4 g/dL | Hematokrit (PCV): %34 | Lökosit (WBC): 11.8 x10³/µL | Nötrofil: %48 | Eozinofil: %16 (Şiddetli Akut Eozinofili - Akut Tip I Hipersensitivite) | Plazma Fibrinojeni: 380 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "eozinofil"],
+                "content": "RBC: 6.5 x10⁶/µL | Hb: 11.2 g/dL | PCV: %34 | WBC: 12.5 x10³/µL | Eozinofil: %12 (Eozinofili - Akut Tip 1 Alerjik Yanıt!) | Fibrinojen: 310 mg/dL."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 62 U/L | GGT: 19 U/L | ALT: 22 U/L | ALP: 105 U/L | CK: 110 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 45 U/L | GGT: 19 U/L | ALT: 14 U/L | CK: 80 U/L | LDH: 350 U/L | Troponin I: <0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin", "histamin"],
-                "content": "BUN: 14 mg/dL | Kreatinin: 0.8 mg/dL | Glikoz: 72 mg/dL | Total Bilirubin: 0.4 mg/dL | Plazma Histamin ve IgE Düzeyi: AŞIRI YÜKSEK."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 16 mg/dL | Serum Kreatinin: 0.8 mg/dL | Kan Glikozu: 82 mg/dL | Total Bilirubin: 0.4 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 6.9 g/dL | Albümin: 3.3 g/dL | Globülin: 3.6 g/dL | Glutaraldehit Testi: NEGATİF."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 70 g/L | Albümin: 3.4 g/dL | Globülin: 3.6 g/dL | Glutaraldehit: >15 dakika | SAA: 15 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 139 mmol/L | Potasyum (K⁺): 4.2 mmol/L | Klor (Cl⁻): 100 mmol/L | Kalsiyum (Ca²⁺): 9.1 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 141 mmol/L | K⁺: 4.3 mmol/L | Cl⁻: 102 mmol/L | Ca²⁺: 9.4 mg/dL | İnk. Fosfor: 5.0 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.39 | pO₂: 88 mmHg | pCO₂: 39 mmHg | HCO₃⁻: 24.0 mmol/L | Baz Açığı: 0.0 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.41 | pO₂: 86 mmHg | pCO₂: 38 mmHg | HCO₃⁻: 24.0 mmol/L | Baz Açığı (BE): +0.5 mmol/L | Laktat: 1.1 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.020 | İdrar pH: 8.0 | Proteinüri: Negatif | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.020 | pH: 7.7 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Dermato-Histopatoloji",
-                "keywords": ["ultrason", "usg", "biyopsi", "histopatoloji", "ödem"],
-                "content": "Deri Biyopsisi / Histopatoloji: Dermiste belirgin mast hücresi degranülasyonu, eozinofilik infiltrasyon ve interstisyel ödem odajları."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["histopatoloji", "biyopsi", "alerji"],
+                "content": "Kutane Histopatoloji: Dermis tabakasında belirgin perivasküler eozinofil ve mast hücresi infiltrasyonu, dermal ödem."
             }
         }
     },
     "Vaka I (Fırtına)": {
         "kod": "VAKA_I",
-        "tanim": "Akut Larenjit ve Larenks Ödemi / Nekrotik Larenjit",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 180 kiloluk Fırtına isimli buzağımız dün geceden beri gırtlağından hırıl hırıl, düdük sesi gibi ses çıkararak nefes alıyor! Boynunu uzatmış hırlıyor. Boğazını tutunca acıyla peş peşe öksürüyor, ağzına yem alsa da yutamayıp yere düşürüyor...'",
+        "sikayet": "Şiddetli inspiratorik hırıltı/ıslık sesi (stridor), ağzı açık nefes alma, öksürük ve boynu ileri uzatarak nefes alma.",
+        "makroskopik_gorsel": {"fig": "Larenjit", "title": "Ağzı Açık Nefes Alma & Dispne", "file": "gorseller/larenjit_dispne.jpg"},
+        "kesin_tani": "Akut Larenjit & Larenks Ödemi",
+        "ayirici_tani": "Bronkopnömoni (Pnömonide akciğer alt sahalarında yaş rall/krepitasyon vardır; larenjitte akciğer temizdir, üst yolda stridor vardır).",
+        "tedavi": "Hızlı etkili Kortikosteroid (Deksametazon 0.1-0.2 mg/kg IV larenks ödemini çözmek için), NSAID (Flunixin Meglumine), Soğuk buhar uygulaması, İleri asphyxia vakasında acil Trakeotomi.",
+        "kontrendike": "Hayvanı yakalamak için boğazını sıkmak veya ağızdan zorla sıvı/ilaç içirmek (Drenching / Asfiksi riski!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "saman", "toz", "kaba yem"],
-                "content": "Tozlu kaba yem ve saman balyaları tüketilmektedir. Larenks mukozasında mekanik irritasyon riski mevcuttur."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "toz", "saman", "drenching"],
+                "content": "Kuru tozlu saman yemleme veya ağızdan zorla sıvı içirme (drenching) öyküsü."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü", "buzağı"],
-                "content": "Büyütme padoğunda barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Kapalı havalandırması zayıf dana padoğu."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "öksürük"],
-                "content": "1 hafta önce geçirilmiş hafif üst solunum yolu irritasyonu öyküsü vardır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
+                "content": "1 gün önce dehorning (boynuz kesme) ve ağızdan ilaç içirme uygulaması yapılmıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "yutma", "dysphagia", "ağrı"],
-                "content": "Şiddetli yutma ağrısı (dysphagia) nedeniyle lokmaları yutamıyor, ağzından geri düşürüyor (Anoreksi)."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "yutma", "dysphagia"],
+                "content": "Dysphagia (Şiddetli yutma ağrısı) nedeniyle yem ve su yemeyi tamamen reddetme."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "stridor", "larenks", "ödem", "öksürük"],
-                "content": "Vücut Sıcaklığı: 40.2 °C (Yüksek Febril Ateş) | Kalp Frekansı: 108 atım/dk | Solunum Frekansı: 48 nefes/dk (İnspiratorik Stridor / Islık Sesi) | Mukozalar: Hiperemik/Siyanotik | CRT: 2.5 saniye | Larenks Palpasyonu: Şiddetli ağrı yanıtı ve uyarılan paroksizmal öksürük krizi."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "stridor", "öksürük"],
+                "content": "Vücut Sıcaklığı: 39.6 °C | Kalp Frekansı: 104 atım/dk | Solunum Frekansı: 46 nefes/dk (İnspiratorik Dispne) | Mukozalar: Siyanotik | CRT: 2.5 saniye | Larenks palpasyonunda şiddetli öksürük ve nefes darlığı krizi."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
-                "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer", "stridor", "trakea"],
-                "content": "Larenks/Trakea Oskültasyonu: Yüksek tonlu inspiratorik stridor (ıslık/düdük sesi). Akciğer Oskültasyonu: Veziküler solunum sesleri NORMALdir (Patoloji akciğer alveollerinde değil, üst solunum yolundadır!)."
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
+                "keywords": ["kalp ses", "oskültasyon", "dinleme", "stridor", "akciğer"],
+                "content": "Kalp sesleri taşikardik. Üst solunum yolunda ve trakeada belirgin ıslık/hırıltı sesi (İnspiratorik Stridor). Akciğer parankimi temizdir."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "larenks", "trakea"],
-                "content": "Retikulum ağrı testleri NEGATİF. Larenks ve trakea üst kısmına bastırıldığında şiddetli ağrı reaksiyonu (+)."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "retikulum", "trakea"],
+                "content": "Larenks kıkırdaklarına hafif basıda hayvan başını sallar, şiddetli öksürük krizine girer (+)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Eritrosit (RBC): 6.8 x10⁶/µL | Hemoglobin (Hb): 11.5 g/dL | Hematokrit (PCV): %35 | Lökosit (WBC): 22.4 x10³/µL (Şiddetli Lökositoz, Sola Kayma) | Nötrofil: %80 | Plazma Fibrinojeni: 850 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 6.0 x10⁶/µL | Hb: 10.8 g/dL | PCV: %33 | WBC: 16.5 x10³/µL (Nötrofili) | Plazma Fibrinojeni: 580 mg/dL | PP/F: 12.1."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 68 U/L | GGT: 22 U/L | ALT: 24 U/L | ALP: 140 U/L | CK: 120 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 62 U/L | GGT: 20 U/L | ALT: 16 U/L | CK: 105 U/L | LDH: 410 U/L | Troponin I: 0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 18 mg/dL | Kreatinin: 0.9 mg/dL | Glikoz: 82 mg/dL | Total Bilirubin: 0.5 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 20 mg/dL | Serum Kreatinin: 1.0 mg/dL | Kan Glikozu: 95 mg/dL (Stres hiperglisemisi) | Total Bilirubin: 0.5 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 7.4 g/dL | Albümin: 3.2 g/dL | Globülin: 4.2 g/dL | Glutaraldehit Testi: 2.5 dakikada POZİTİF."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 74 g/L | Albümin: 3.2 g/dL | Globülin: 4.2 g/dL | Glutaraldehit: 6 dakika | SAA: 110 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 138 mmol/L | Potasyum (K⁺): 4.0 mmol/L | Klor (Cl⁻): 98 mmol/L | Kalsiyum (Ca²⁺): 9.0 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 138 mmol/L | K⁺: 4.0 mmol/L | Cl⁻: 99 mmol/L | Ca²⁺: 9.0 mg/dL | İnk. Fosfor: 4.8 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.39 | pO₂: 92 mmHg (NORMAL - Akciğer alveollerinde gaz alışverişi sağlamdır!) | pCO₂: 44 mmHg | HCO₃⁻: 24.5 mmol/L | Baz Açığı: +0.5 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.31 (Solunumsal Asidoz başlangıcı) | pO₂: 64 mmHg | pCO₂: 52 mmHg (Karbondioksit retansiyonu!) | HCO₃⁻: 25.5 mmol/L | Baz Açığı (BE): -1.0 mmol/L | Laktat: 2.4 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.024 | İdrar pH: 7.0 | Proteinüri: Negatif | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.021 | pH: 7.5 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Endoskopi",
-                "keywords": ["ultrason", "usg", "endoskopi", "laringoskopi", "kültür", "fusobacterium"],
-                "content": "Endoskopi / Laringoskopi: Larenks aditusunda ve arytenoid kıkırdaklarda şiddetli ödem, mukoza hiperemisi ve daralma. Kültür: Fusobacterium necrophorum ve Trueperella pyogenes izole edilmiştir."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["endoskopi", "laringoskopi", "röntgen"],
+                "content": "Endoskopi / Laringoskopi: Larenks mukozasında ve arytenoid kıkırdaklarda şiddetli hiperemi, ödem ve lümen darlığı. Akciğer radyografisinde parankim temizdir."
             }
         }
     },
     "Vaka J (Şahin)": {
         "kod": "VAKA_J",
-        "tanim": "Kronik Frontal Sinüzit / Boynuz Kesimi Sekeli",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 560 kiloluk Şahin isimli tosunumuzun 1 ay önce boynuzunu kestirmiştik. Son 1 haftadır kesilen boynuzun olduğu taraftaki burun deliğinden çok pis kokulu, iltihaplı sarı akıntı geliyor. Başını sola doğru eğip duruyor, boynuz köküne dokununca bağırıyor...'",
+        "sikayet": "Tek taraflı mukopürülan sarı-yeşil burun akıntısı, boynuz kaidesinde şişlik, başı duvara dayama ve baş ağrısı depresyonu.",
+        "makroskopik_gorsel": {"fig": "Sinüzit", "title": "Tek Taraflı Pürülan Burun Akıntısı", "file": "gorseller/sinuzit_burun_akintisi.jpg"},
+        "kesin_tani": "Frontal Sinüzit (Boynuz Kesimi / Dehorning Sekonder Bakteriyel Sinüzit)",
+        "ayirici_tani": "Bronkopnömoni ve Plevritis (Sinüzitte burun akıntısı tek taraflıdır ve boynuz kaidesinde perküsyon matitesi vardır; pnömonide akıntı çift taraflı olup akciğer oskültasyon bulgusu vardır).",
+        "tedavi": "Sinüs Trepanasyonu (Sinüs delinip pürülan eksudatın %0.9 NaCl ve Antiseptik solüsyonla yıkanması), Sistemik Parenteral Antibiyotik (Procaine Penicillin / Ceftiofur), NSAID (Meloksikam 0.5 mg/kg).",
+        "kontrendike": "Tıkalı sinüs boşluğunu yıkamadan sadece yüzeysel antibiyotik vermek.",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "besi"],
-                "content": "Besi rasyonu ile beslenmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle"],
+                "content": "Standart besi ve süt rasyonu verilmektedir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "sürü"],
-                "content": "Besi işletmesinde barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "nakil"],
+                "content": "Besi tesisi padoğunda barındırılmaktadır."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "boynuz", "dehorning", "kesim"],
-                "content": "1 ay önce Hijyenik olmayan koşullarda açık yöntemle boynuz kesimi (dehorning) yapılmıştır. Sinüs boşluğu dış ortama açık kalmıştır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "dehorning", "boynuz"],
+                "content": "3 hafta önce açık yöntemle (testereyle) dehorning / boynuz kesimi yapılmıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "anoreksi"],
-                "content": "Baş ağrısı ve ağrı nedeniyle hafif hiporeksi."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "hiporeksi"],
+                "content": "Şiddetli baş ağrısına bağlı iştahsızlık (Hiporeksi), başı duvara dayama."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "sinüs", "burun akıntısı", "fetid", "iltihap"],
-                "content": "Vücut Sıcaklığı: 39.3 °C | Kalp Frekansı: 84 atım/dk | Solunum Frekansı: 26 nefes/dk | Mukozalar: Pembe | CRT: 1.8 saniye | Muayene: Tek taraflı, son derece pis kokulu (fetid), pürülan burun akıntısı. Başın etkilenen tarafa doğru eğilmesi. Frontal sinüs kemiği üzerinde basınçlı palpasyonda şiddetli ağrı."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "burun akıntısı", "boynuz"],
+                "content": "Vücut Sıcaklığı: 39.4 °C | Kalp Frekansı: 86 atım/dk | Solunum Frekansı: 30 nefes/dk | Mukozalar: Pembe / hafif hiperemik | CRT: 1.8 saniye | Sağ burun deliğinden tek taraflı koyu sarı-yeşil kötü kokulu pürülan akıntı."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp ve akciğer oskültasyonu TAMAMEN NORMALdir."
+                "content": "Kalp ve akciğer oskültasyonu normaldir."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum, Sinüs Perküsyonu & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "perküsyon", "sinüs", "matite"],
-                "content": "Retikulum ağrı testleri NEGATİF. Frontal Sinüs Perküsyonu (Vuruk Muayenesi): Etkilenen sinüs bölgesinde belirgin MAT SES (Matite) ve şiddetli ağrı reaksiyonu (+)."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "perküsyon", "matite", "sinüs"],
+                "content": "Frontal sinüs bölgesi ve boynuz kaidesine perküsyon uygulandığında matite (tok ses) duyulur ve hayvan başını kaçırır (Ağrı +)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Eritrosit (RBC): 6.4 x10⁶/µL | Hemoglobin (Hb): 11.0 g/dL | Hematokrit (PCV): %33 | Lökosit (WBC): 16.2 x10³/µL (Lökositoz) | Plazma Fibrinojeni: 720 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 5.9 x10⁶/µL | Hb: 10.2 g/dL | PCV: %31 | WBC: 18.8 x10³/µL (Sola kaymalı lökositoz) | Plazma Fibrinojeni: 620 mg/dL | PP/F: 11.5."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 64 U/L | GGT: 20 U/L | ALT: 22 U/L | ALP: 110 U/L | CK: 105 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 58 U/L | GGT: 21 U/L | ALT: 17 U/L | CK: 90 U/L | LDH: 440 U/L | Troponin I: <0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 16 mg/dL | Kreatinin: 0.9 mg/dL | Glikoz: 74 mg/dL | Total Bilirubin: 0.4 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 17 mg/dL | Serum Kreatinin: 0.9 mg/dL | Kan Glikozu: 76 mg/dL | Total Bilirubin: 0.4 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit"],
-                "content": "Total Protein: 7.2 g/dL | Albümin: 3.1 g/dL | Globülin: 4.1 g/dL | Glutaraldehit Testi: 4 dakikada POZİTİF."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 76 g/L | Albümin: 3.1 g/dL | Globülin: 4.5 g/dL | Glutaraldehit: 5 dakika | SAA: 180 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 139 mmol/L | Potasyum (K⁺): 4.1 mmol/L | Klor (Cl⁻): 99 mmol/L | Kalsiyum (Ca²⁺): 9.1 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 139 mmol/L | K⁺: 4.1 mmol/L | Cl⁻: 101 mmol/L | Ca²⁺: 9.1 mg/dL | İnk. Fosfor: 4.7 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.38 | pO₂: 88 mmHg | pCO₂: 41 mmHg | HCO₃⁻: 24.1 mmol/L | Baz Açığı: +0.1 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.39 | pO₂: 84 mmHg | pCO₂: 40 mmHg | HCO₃⁻: 23.9 mmol/L | Baz Açığı (BE): -0.2 mmol/L | Laktat: 1.3 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.022 | İdrar pH: 8.0 | Proteinüri: Negatif | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.022 | pH: 7.6 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Röntgen & Kültür",
-                "keywords": ["ultrason", "usg", "röntgen", "grafi", "sinüs", "kültür", "eksudat"],
-                "content": "Kafa / Sinüs Radyografisi (Röntgen): Frontal sinüs lümeninde homojen radyoopak eksudat birikimi ve sıvı-hava seviyesi. Sinüs Ponksiyonu & Kültür: Trueperella pyogenes ve anaerob bakteri kolonizasyonu."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["röntgen", "radyografi", "kültür", "sinüs"],
+                "content": "Kafatası Radyografisi (Röntgen): Frontal sinüs boşluğunda radyoopak pürülan sıvı seviyesi (Sıvı-gaz seviyesi). Sinüs Ponksiyon Kültürü: Trueperella pyogenes ve Pasteurella multocida üremesi."
             }
         }
     },
     "Vaka K (Rüzgar)": {
         "kod": "VAKA_K",
-        "tanim": "Hava Kesesi Mikozu / Guttural Pouch Mycosis (Aspergillus fumigatus)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 480 kiloluk İngiliz atımız Rüzgar durduğu yerde aniden burnundan foşur foşur taze kan akıtmaya başladı! Hiçbir darbe almadı. Ayrıca iki gündür samanı ağzına alıyor ama yutamıyor, içtiği su ve yem lokmaları burnundan geri çıkıyor...'",
+        "sikayet": "At hastada dinlenme halindeyken kendiliğinden (spontan) başlayan şiddetli burun kanaması (epistaksis), yutma zorluğu (dysphagia) ve Horner sendromu.",
+        "makroskopik_gorsel": {"fig": "HavaKesesiMikozu", "title": "Spontan Burun Kanaması (Epistaksis)", "file": "gorseller/hava_kesesi_epistaksis.jpg"},
+        "kesin_tani": "Hava Kesesi Mikozu (Guttural Pouch Mycosis – Aspergillus fumigatus)",
+        "ayirici_tani": "Hava Kesesi Empiyemi (Empiyemde pürülan irinli akıntı vardır, epizodik fışkırır tarzda arteriyel epistaksis yoktur; mikozda damar erimesine bağlı şiddetli kanama vardır).",
+        "tedavi": "Cerrahi Müdahale: İç Karotid Arter Transarteriyel Embolizasyonu (Coiling / Ligation), Sistemik ve Lokal Antifungal (İtrakonazol / Vorikonazol).",
+        "kontrendike": "Cerrahi damar oklüzyonu yapmadan sadece tampon koymak (Arter eridiği için fatal iç kanamaya yol açar!).",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "yulaf", "saman", "küf", "mantar"],
-                "content": "At harasında yulaf ve kuru ot ile beslenmektedir. Kalitesiz/küflü ot balyası maruziyeti mümkündür."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle", "küf", "saman", "yulaf"],
+                "content": "Küflü, nemli ortamda depolanmış yulaf ve tozlu kaba yem tüketim öyküsü."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "at", "hara"],
-                "content": "At harasında boks içerisinde barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "hara", "tavla"],
+                "content": "Kapalı at harası / tavlası."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "epistaksis", "kanama"],
-                "content": "1 hafta önce hafif spontan burun kanaması (epistaksis) uyarısı görülüp kendiliğinden durmuştur."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "öykü"],
+                "content": "2 haftadır devam eden hafif mukoz burun akıntısı sonrası aniden şiddetli kanama başlamıştır."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "yutma", "dysphagia", "rejitasyon", "burundan yem"],
-                "content": "9, 10 ve 12. kafa çifti sinir felçlerine sekonder ŞİDDETLİ YUTMA GÜÇLÜĞÜ (Dysphagia). İçilen su ve lokmalar burundan geri geliyor (Regürjitasyon)."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "dysphagia", "regürjitasyon"],
+                "content": "Dysphagia ve sinir felcine bağlı suyun ve yemin burundan geri gelmesi (Regürjitasyon), iştahsızlık."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "epistaksis", "kanama", "horner"],
-                "content": "Vücut Sıcaklığı: 38.2 °C (At için Normal) | Kalp Frekansı: 68 atım/dk (Kan kaybına sekonder Taşikardi) | Solunum Frekansı: 22 nefes/dk | Mukozalar: Soluk pembe | CRT: 2.5 saniye | Muayene: Tek/Çift taraflı fışkırır tarzda taze arteriyel burun kanaması (Epistaksis), kulak düşüklüğü ve miyozis (Horner Sendromu belirtileri)."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "epistaksis", "kanama"],
+                "content": "Vücut Sıcaklığı: 38.2 °C (At normali) | Kalp Frekansı: 68 atım/dk (Taşikardik) | Solunum Frekansı: 22 nefes/dk | Mukozalar: Soluk / anemi | CRT: 2.5 saniye | Burundan spontan taze kan gelmesi (Epistaksis), Horner sendromu."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp sesleri taşikardik. Akciğer oskültasyonunda reaspirasyon kanamasına bağlı alt alanlarda ılımlı raller."
+                "content": "Kalp sesleri taşikardik. Akciğerlerde kan aspirasyonu riski nedeniyle alt sahalarda veziküler sesler artmış."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "hava kesesi", "parotis"],
-                "content": "Parotis ve hava kesesi bölgesi palpasyonunda hafif duyarlılık."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "viborg", "parotis"],
+                "content": "Parotis bölgesi ve Viborg üçgeni hassas ve ağrılıdır."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv", "anemi"],
-                "content": "Eritrosit (RBC): 4.2 x10⁶/µL (Akut Kan Kaybı Anemisi) | Hemoglobin (Hb): 7.8 g/dL | Hematokrit (PCV): %24 | Lökosit (WBC): 12.8 x10³/µL | Plazma Fibrinojeni: 420 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "anemi", "fibrinojen"],
+                "content": "RBC: 3.8 x10⁶/µL (Kan kaybı anemisi) | Hb: 7.5 g/dL | PCV: %23 | WBC: 14.2 x10³/µL | Plazma Fibrinojeni: 510 mg/dL."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 180 U/L | GGT: 24 U/L | ALT: 18 U/L | ALP: 190 U/L | CK: 220 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 180 U/L | GGT: 28 U/L | ALT: 12 U/L | CK: 210 U/L | LDH: 620 U/L | Troponin I: 0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 22 mg/dL | Kreatinin: 1.1 mg/dL | Glikoz: 92 mg/dL | Total Bilirubin: 1.0 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 24 mg/dL | Serum Kreatinin: 1.2 mg/dL | Kan Glikozu: 90 mg/dL | Total Bilirubin: 0.8 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit", "saa"],
-                "content": "Total Protein: 6.0 g/dL | Albümin: 2.8 g/dL | Globülin: 3.2 g/dL | SAA (Serum Amyloid A): 180 µg/mL (Yüksek)."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 62 g/L (Hipoproteinemi) | Albümin: 2.5 g/dL | Globülin: 3.7 g/dL | SAA: 140 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 136 mmol/L | Potasyum (K⁺): 3.6 mmol/L | Klor (Cl⁻): 95 mmol/L | Kalsiyum (Ca²⁺): 11.2 mg/dL (At için normal)."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 137 mmol/L | K⁺: 3.7 mmol/L | Cl⁻: 98 mmol/L | Ca²⁺: 11.2 mg/dL (At için normal) | İnk. Fosfor: 3.5 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.38 | pO₂: 88 mmHg | pCO₂: 40 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı: -0.5 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.36 | pO₂: 78 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 23.0 mmol/L | Baz Açığı (BE): -1.0 mmol/L | Laktat: 2.1 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.030 | İdrar pH: 7.5 | Proteinüri: Negatif | Mikrohematüri: Negatif (Kan üriner sistemden gelmemektedir)."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.025 | pH: 7.5 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Endoskopi",
-                "keywords": ["ultrason", "usg", "endoskopi", "hava kesesi", "aspergillus", "carotis", "arter"],
-                "content": "Guttural Pouch Endoskopisi: Hava kesesi dorsomedial bölmesinde Arteria carotis interna üzerinde siyah/yeşilimsi Aspergillus fumigatus fungal plağı (mantar plağı) ve eroze olmuş damar üzerinde taze pıhtı teşhisi."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["endoskopi", "guttural", "hava kesesi", "kültür", "aspergillus"],
+                "content": "Guttural Pouch Endoskopisi: Hava kesesi çatı duvarında İç Karotid Arter üzerinde siyah-yeşil mantar plağı (Diphtheritic plaque) ve damar lümen erimesi. Kültür/Mantar İzolasyonu: Aspergillus fumigatus tespiti."
             }
         }
     },
     "Vaka L (Poyraz)": {
         "kod": "VAKA_L",
-        "tanim": "Hava Kesesi Empiyemi / Guttural Pouch Empyema & Kondroitler (Gurm Sekeli)",
-        "sikayet": "Yetiştirici İfadesi: 'Hocam 520 kiloluk Poyraz isimli atımız 1 ay önce ağır bir boğaz iltihabı (gurm) geçirdi. Hastalık geçti derken şimdi boğazının altı, kulak arkası davul gibi şişti! Başını öne uzatıyor, eğemiyor. Burun deliklerinden katı koyu iltihap geliyor...'",
+        "sikayet": "At hastada başı öne eğerken her iki burun deliğinden bol miktarda koyu pürülan (irinli) akıntı gelmesi ve Viborg üçgeninde ağrılı şişlik.",
+        "makroskopik_gorsel": {"fig": "HavaKesesiEmpiyemi", "title": "İrinli Burun Akıntısı & Parotis Şişliği", "file": "gorseller/hava_kesesi_empiyem.jpg"},
+        "kesin_tani": "Hava Kesesi Empiyemi (Guttural Pouch Empyema – Streptococcus equi subsp. equi)",
+        "ayirici_tani": "Hava Kesesi Mikozu (Mikozda arterial kanama vardır; empiyemde koyu irinli akıntı ve kondroid pürülan taşlar vardır).",
+        "tedavi": "Hava kesesi kateterizasyonu ve antiseptik solüsyonlarla lavajı, Kondroid pürülan taşlaşmış kitlelerin endoskopik/cerrahi çıkarılması, Sistemik Penisilin G tedavisi.",
+        "kontrendike": "İrinli eksudatı drenaj yapmadan sadece semptomatik tedavi uygulamak.",
         "categories": {
             "RASYON_YEM": {
-                "name": "Rasyon & Yemleme Öyküsü",
-                "keywords": ["rasyon", "yem", "besle", "ne yiyor", "saman", "yulaf"],
-                "content": "Standart hara rasyonu verilmektedir."
+                "name": "🌾 Rasyon & Yemleme Öyküsü",
+                "keywords": ["rasyon", "yem", "besle"],
+                "content": "Standart at binek rasyonu verilmektedir."
             },
             "LOKASYON_RAKIM": {
-                "name": "Lokasyon & Coğrafi / Sürü Öyküsü",
-                "keywords": ["rakım", "yayla", "nereden", "nereli", "yer", "at", "hara"],
-                "content": "At harasında barındırılmaktadır."
+                "name": "📍 Lokasyon & Coğrafi Öykü",
+                "keywords": ["rakım", "yayla", "nereden", "yer", "sevk", "hara"],
+                "content": "Toplu barındırılan binek atı ahırı."
             },
             "GECMIS_HASTALIK": {
-                "name": "Geçmiş Hastalık & Sağlık Öyküsü",
-                "keywords": ["geçmiş", "önceden", "hastalık", "öykü", "gurm", "streptococcus", "boğaz"],
-                "content": "1 ay önce geçirilmiş Streptococcus equi subsp. equi enfeksiyonu (Gurm hastalığı) öyküsü vardır."
+                "name": "📜 Geçmiş Hastalık & Sağlık Geçmişi",
+                "keywords": ["geçmiş", "önceden", "hastalık", "gurm", "streptococcus"],
+                "content": "1 ay önce geçirilmiş Gurm (Streptococcus equi) enfeksiyonu ve lenf yumrusu patlama öyküsü."
             },
             "ISTAH_DURUMU": {
-                "name": "İştah & Yutma / Çiğneme Durumu",
-                "keywords": ["iştah", "yem yeme", "geviş", "yutma", "dysphagia"],
-                "content": "Boğaz ve parotis bölgesindeki ağrılı mekanik baskı nedeniyle yutma güçlüğü ve yem yemede isteksizlik."
+                "name": "🍽️ İştah & Yutma / Çiğneme Durumu",
+                "keywords": ["iştah", "yem yiyor mu", "su", "yutma", "dysphagia"],
+                "content": "Dysphagia ve yutma ağrısı nedeniyle iştahsızlık, yem çiğnemede isteksizlik."
             },
             "VITAL_BULGULAR": {
-                "name": "Genel Muayene & Vital Bulgular",
-                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "nefes", "mukoza", "crt", "şişlik", "parotis", "pürülan", "akıntı"],
-                "content": "Vücut Sıcaklığı: 39.5 °C (Ateşli) | Kalp Frekansı: 72 atım/dk | Solunum Frekansı: 26 nefes/dk | Mukozalar: Hiperemik | CRT: 2.0 saniye | Muayene: Başın kafa kaidesinden öne doğru uzatılması. Parotis ve retrofaringeal bölgede bilateral sıcak, ağrılı ve fluktuan şişlik. Burun deliklerinden çift taraflı koyu pürülan akıntı."
+                "name": "🩺 Genel Muayene & Vital Bulgular",
+                "keywords": ["ateş", "sıcaklık", "derece", "nabız", "kalp frekans", "solunum", "mukoza", "crt", "pürülan", "akıntı", "viborg"],
+                "content": "Vücut Sıcaklığı: 39.5 °C (Yüksek ateş) | Kalp Frekansı: 58 atım/dk | Solunum Frekansı: 20 nefes/dk | Mukozalar: Hiperemik | CRT: 2.0 saniye | Başı öne eğerken çift taraflı kremsi pürülan burun akıntısı, Viborg üçgeninde ağrılı şişlik."
             },
             "OSKULTASYON": {
-                "name": "Kalp, Akciğer & Göğüs Oskültasyonu",
+                "name": "🎧 Kalp, Akciğer & Göğüs Oskültasyonu",
                 "keywords": ["kalp ses", "oskültasyon", "dinleme", "akciğer"],
-                "content": "Kalp sesleri normal. Akciğerlerde hafif sertleşmiş veziküler sesler."
+                "content": "Kalp ve akciğer oskültasyonu normaldir."
             },
             "AGRI_TESTLERI": {
-                "name": "Retikulum & Ağrı Testleri",
-                "keywords": ["sopa", "kama", "withers", "ağrı", "pinch", "retikulum", "parotis", "boğaz"],
-                "content": "Parotis ve hava kesesi bölgesine bastırıldığında şiddetli ağrı reaksiyonu (+)."
+                "name": "🔨 Retikulum, Perküsyon & Ağrı Testleri",
+                "keywords": ["sopa", "kama", "withers", "ağrı", "parotis", "viborg"],
+                "content": "Parotis ve Viborg üçgeni palpasyonunda ağrı ve fluktuasyon (+)."
             },
             "HEMOGRAM": {
-                "name": "Tam Hemogram (CBC) Tahlili",
-                "keywords": ["hemogram", "wbc", "lökosit", "kan sayım", "fibrinojen", "eritrosit", "rbc", "pcv"],
-                "content": "Eritrosit (RBC): 6.8 x10⁶/µL | Hemoglobin (Hb): 11.8 g/dL | Hematokrit (PCV): %36 | Lökosit (WBC): 22.4 x10³/µL (Şiddetli Lökositoz, Nötrofili) | Plazma Fibrinojeni: 920 mg/dL."
+                "name": "🩸 Tam Hemogram (CBC) Tahlili",
+                "keywords": ["hemogram", "cbc", "wbc", "lökosit", "rbc", "pcv", "fibrinojen"],
+                "content": "RBC: 6.8 x10⁶/µL | Hb: 11.8 g/dL | PCV: %36 | WBC: 24.5 x10³/µL (Şiddetli Lökositoz) | Plazma Fibrinojeni: 780 mg/dL."
             },
             "BIYOKIMYA_ENZIMLER": {
-                "name": "Serum Biyokimyası & Organ Enzim Paneli",
-                "keywords": ["biyokimya", "ast", "ggt", "alt", "alp", "ck"],
-                "content": "AST: 78 U/L | GGT: 22 U/L | ALT: 20 U/L | ALP: 130 U/L | CK: 140 U/L."
+                "name": "🧪 Serum Biyokimyası & Organ Enzim Paneli",
+                "keywords": ["ast", "ggt", "alt", "alp", "ck", "ldh", "troponin"],
+                "content": "AST: 95 U/L | GGT: 24 U/L | ALT: 15 U/L | CK: 120 U/L | LDH: 480 U/L | Troponin I: <0.01 ng/mL."
             },
             "BIYOKIMYA_RENAL_METABOLIK": {
-                "name": "Renal Fonksiyon & Metabolit Paneli",
-                "keywords": ["üre", "bun", "kreatinin", "glikoz", "bilirubin"],
-                "content": "BUN: 18 mg/dL | Kreatinin: 1.0 mg/dL | Glikoz: 85 mg/dL | Total Bilirubin: 0.6 mg/dL."
+                "name": "🧬 Renal Fonksiyon & Metabolit Paneli",
+                "keywords": ["bun", "üre", "kreatinin", "glikoz", "bilirubin"],
+                "content": "BUN: 21 mg/dL | Serum Kreatinin: 1.1 mg/dL | Kan Glikozu: 85 mg/dL | Total Bilirubin: 0.6 mg/dL."
             },
             "BIYOKIMYA_PROTEIN_YANGI": {
-                "name": "Serum Proteinleri & Akut Faz Yangı Paneli",
-                "keywords": ["albümin", "globülin", "total protein", "tp", "glutaraldehit", "saa"],
-                "content": "Total Protein: 8.4 g/dL | Albümin: 2.9 g/dL | Globülin: 5.5 g/dL (Hipergamaglobulinemi) | SAA (Serum Amyloid A): 450 µg/mL (Aşırı Yüksek Akut Faz Yanıtı)."
+                "name": "🛡️ Serum Proteinleri & Akut Faz Yangı Paneli",
+                "keywords": ["protein", "albümin", "globülin", "glutaraldehit", "saa"],
+                "content": "Total Protein: 84 g/L | Albümin: 2.8 g/dL | Globülin: 5.6 g/dL | SAA: 420 µg/mL."
             },
             "ELEKTROLIT_MINERAL": {
-                "name": "Serum Elektrolit & Mineral Paneli",
-                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor", "na", "k", "cl"],
-                "content": "Sodyum (Na⁺): 137 mmol/L | Potasyum (K⁺): 3.9 mmol/L | Klor (Cl⁻): 97 mmol/L | Kalsiyum (Ca²⁺): 10.8 mg/dL."
+                "name": "⚡ Serum Elektrolit & Mineral Paneli",
+                "keywords": ["sodyum", "potasyum", "klor", "kalsiyum", "fosfor"],
+                "content": "Na⁺: 138 mmol/L | K⁺: 4.0 mmol/L | Cl⁻: 100 mmol/L | Ca²⁺: 11.5 mg/dL | İnk. Fosfor: 3.8 mg/dL."
             },
             "KAN_GAZI": {
-                "name": "Venöz Kan Gazı & Asit-Baz Analizi",
-                "keywords": ["kan gazı", "ph", "po2", "pco2", "bikarbonat", "hco3", "baz açığı", "be"],
-                "content": "Kan pH: 7.36 | pO₂: 86 mmHg | pCO₂: 42 mmHg | HCO₃⁻: 22.8 mmol/L | Baz Açığı: -1.5 mmol/L."
+                "name": "🫁 Venöz / Arteriyel Kan Gazı & Asit-Baz Analizi",
+                "keywords": ["kan gazı", "ph", "po2", "pco2", "hco3", "be", "laktat"],
+                "content": "Kan pH: 7.38 | pO₂: 82 mmHg | pCO₂: 40 mmHg | HCO₃⁻: 23.5 mmol/L | Baz Açığı (BE): -0.5 mmol/L | Laktat: 1.4 mmol/L."
             },
             "IDRAR_TAHLILI": {
-                "name": "Tam İdrar Tahlili (Urinalysis)",
-                "keywords": ["idrar", "dansite", "ph", "proteinüri", "glikozüri", "sediment"],
-                "content": "İdrar Dansitesi: 1.026 | İdrar pH: 7.5 | Proteinüri: +1 | Glikozüri: Negatif | Mikroskopik Sediment: Temiz."
+                "name": "🚽 Tam İdrar Tahlili (Urinalysis)",
+                "keywords": ["idrar", "dansite", "proteinüri", "sediment"],
+                "content": "İdrar Spesifik Gravite: 1.024 | pH: 7.6 | Protein: (-) | Glikoz: (-) | Keton: (-) | Bilirubin: (-) | Sediment temiz."
             },
             "GORUNTULEME_MIKROBIYOLOJI": {
-                "name": "Görüntüleme & Mikrobiyoloji / Röntgen & Endoskopi",
-                "keywords": ["ultrason", "usg", "röntgen", "endoskopi", "kondroit", "hava kesesi", "streptococcus"],
-                "content": "Guttural Pouch Endoskopisi & Radyografi: Hava kesesi lümeninde birikmiş koyu pürülan eksudat ve taşlaşmış oval irin topçukları (Kondroit / Chondroid kitleleri). Kültür: Streptococcus equi subsp. equi üretilmiştir."
+                "name": "🔬 Görüntüleme, Mikrobiyoloji & Kültür",
+                "keywords": ["endoskopi", "guttural", "kültür", "streptococcus"],
+                "content": "Guttural Pouch Endoskopisi: Hava kesesi tabanında birikmiş pürülan eksudat kütlesi ve taşlaşmış katı irin konglomeratları (Chondroids). Bakteri Kültürü: Streptococcus equi subsp. equi üremesi."
             }
         }
     }
@@ -1122,13 +1127,13 @@ CASES = {
 
 # Header UI
 st.markdown("<h1 class='main-title'>🐄 VET401 İç Hastalıkları I</h1>", unsafe_allow_html=True)
-st.markdown("<h3 class='sub-title'>Akıllı Anamnez & Kapsamlı Klinik Bulgu Sorgu Konsolu</h3>", unsafe_allow_html=True)
+st.markdown("<h3 class='sub-title'>Akıllı Anamnez & Bulgu Sorgulama Konsolu (Serbest Metin Sorgulama)</h3>", unsafe_allow_html=True)
 
 st.markdown("""
     <div style='background-color:#EBF1F5; padding:14px 18px; border-radius:6px; margin-bottom:20px; font-size:14px; border-left:5px solid #1F4E79;'>
-        <b>📌 Öğrenci Talimatı:</b> Bu sistemde hazır şıklar veya butonlar <u>yoktur</u>. 
-        Kafanızdaki klinik şüpheye ve hekimlik sorgulamanıza göre merak ettiğiniz parametreleri kutucuğa <b>kendi cümlelerinizle</b> yazınız 
-        (Örn: <i>"Rasyon bilgisi nedir?"</i>, <i>"Ateşi kaç derece?"</i>, <i>"Kalp ve akciğer sesleri nasıl?"</i>, <i>"Hemogram ve fibrinojen kaç?"</i>, <i>"Serum AST, GGT, BUN tahlili istiyorum"</i>, <i>"Kan gazı pO2 ve laktat sonucu nedir?"</i>, <i>"İdrar tahlilinde bilirubin ve protein var mı?"</i>, <i>"Ultrason/Röntgen çekelim"</i>).
+        <b>📌 Öğrenci Talimatı:</b> Bu sistemde hazır şıklar <u>yoktur</u>. 
+        Klinik şüphenize göre ne öğrenmek istiyorsanız kutucuğa <b>kendi cümlenizle veya kelimelerinizle</b> yazınız 
+        (Örn: <i>"Rasyon bilgisi nedir?"</i>, <i>"Kalp sesleri nasıl?"</i>, <i>"Ateşi kaç derece?"</i>, <i>"Hemogram ve biyokimya sonuçları"</i>, <i>"Kan gazı analizi"</i>, <i>"Deri kazıntısı yapalım"</i>).
     </div>
 """, unsafe_allow_html=True)
 
@@ -1155,16 +1160,15 @@ if "history" not in st.session_state:
 st.markdown(f"<div class='vaka-header'>📋 {selected_case_name} — İlk Başvuru Şikayeti</div>", unsafe_allow_html=True)
 st.info(f"**Hastanın Başvuru Şikayeti:** {active_case['sikayet']}")
 
-# AUTOMATIC DISPLAY OF MACROSCOPIC CLINICAL IMAGES UPON CASE SELECTION
+# AUTOMATIC DISPLAY OF CLEAN MACROSCOPIC CLINICAL IMAGES UPON CASE SELECTION
 if "makroskopik_gorsel" in active_case:
     mg = active_case["makroskopik_gorsel"]
-    img_path = find_gorsel_path(mg["file"])
-    
-    if img_path and os.path.exists(img_path):
-        st.image(img_path, use_container_width=True)
+    img_p = find_gorsel_path(mg["file"])
+    if img_p and os.path.exists(img_p):
+        st.image(img_p, use_container_width=True)
     else:
         uploaded_img = st.file_uploader(
-            f"📷 Klinik Görsel Yükleyiniz (.jpg / .png):",
+            f"📷 Klinik Görselini Yükleyiniz (.jpg / .png):",
             type=["jpg", "jpeg", "png"],
             key=f"up_macro_{active_case['kod']}"
         )
@@ -1181,7 +1185,7 @@ def match_query(user_text, categories_dict):
     for cat_key, cat_info in categories_dict.items():
         for kw in cat_info["keywords"]:
             kw_clean = kw.lower().replace("ı", "i").replace("ğ", "g").replace("ü", "u").replace("ş", "s").replace("ö", "o").replace("ç", "c")
-            if re.search(r'\\b' + re.escape(kw_clean), text_clean) or kw_clean in text_clean:
+            if re.search(r'\b' + re.escape(kw_clean), text_clean) or kw_clean in text_clean:
                 matched_cats.append(cat_key)
                 break
     return matched_cats
@@ -1192,7 +1196,7 @@ with col_input:
     user_query = st.text_input(
         "Sorunuzu Buraya Yazınız:",
         key="query_input",
-        placeholder="Örn: İştah durumu nasıl?, AST/GGT kaç?, İdrar tahlili sonucu nedir?, Deri kazıntısı yapalım..."
+        placeholder="Örn: Rasyon nedir?, Ateşi kaç?, Kalp sesleri nasıl?, Hemogram/biyokimya tahlilleri, Deri kazıntısı..."
     )
 
 with col_button:
@@ -1218,9 +1222,9 @@ if submit_btn and user_query:
                 st.session_state.history.append(item_dict)
                 new_disc += 1
         if new_disc > 0:
-            st.success(f"🎉 {new_disc} yeni klinik bulgu / detaylı tahlil bilgisi açığa çıkarıldı!")
+            st.success(f"🎉 {new_disc} yeni klinik bulgu / bilgi açığa çıkarıldı!")
     else:
-        st.warning("⚠️ Eşleşen bilgi bulunamadı. Lütfen sorunuzu farklı tahlil/muayene kelimeleriyle yazınız (Örn: 'rasyon', 'ateş', 'hemogram', 'ast', 'biyokimya', 'idrar', 'kan gazı', 'ultrason').")
+        st.warning("⚠️ Eşleşen bilgi bulunamadı. Lütfen sorunuzu farklı kelimelerle yazınız.")
 
 # Display Discovered Information
 st.markdown("---")
@@ -1234,16 +1238,16 @@ if st.session_state.history:
                     <span class='badge-category'>{item['title']}</span>
                     <span style='font-size:12px; color:#7F7F7F;'>Sorulan Soru: "{item['query']}"</span>
                 </div>
-                <div class='card-content'><b>🩺 Bulgu / Tahlil Sonucu:</b> {item['content']}</div>
+                <div class='card-content'><b>🩺 Bulgu / Öykü:</b> {item['content']}</div>
             </div>
         """, unsafe_allow_html=True)
         
-        # MICROSCOPIC IMAGES DISPLAYED ONLY AFTER BEING QUERY-TRIGGERED
+        # CLEAN MICROSCOPIC IMAGES DISPLAYED ONLY AFTER BEING QUERY-TRIGGERED
         if "gorsel" in item:
             g = item["gorsel"]
-            micro_path = find_gorsel_path(g["file"])
-            if micro_path and os.path.exists(micro_path):
-                st.image(micro_path, use_container_width=True)
+            img_p = find_gorsel_path(g["file"])
+            if img_p and os.path.exists(img_p):
+                st.image(img_p, use_container_width=True)
             else:
                 up_micro = st.file_uploader(
                     f"📷 Mikroskopik Görsel Yükleyiniz (.jpg / .png):",
@@ -1252,14 +1256,10 @@ if st.session_state.history:
                 )
                 if up_micro is not None:
                     st.image(up_micro, use_container_width=True)
+else:
+    st.info("Henüz bu vaka için soru sormadınız. Yukarıdaki arama kutusuna merak ettiğiniz soruyu yazarak muayeneye başlayınız.")
 
-# Clear Button
-if st.session_state.history:
-    if st.button("🗑️ Bu Vakanın Sorgu Geçmişini Temizle"):
-        st.session_state.history = []
-        st.rerun()
-
-# Teacher Portal (Hoca Paneli) in Sidebar
+# Teacher Portal in Sidebar
 with st.sidebar:
     st.markdown("### 🏛️ ÇU Veteriner Fakültesi")
     st.markdown("**VET401 İç Hastalıkları I**")
@@ -1270,15 +1270,19 @@ with st.sidebar:
         pass_code = st.text_input("Giriş Şifresi:", type="password")
         if pass_code == "vet401":
             st.success("Eğitmen Erişimi Onaylandı!")
-            st.markdown(f"#### 🔑 **{selected_case_name}** Cevap Anahtarı:")
-            st.markdown(f"**• Tescilli Kesin Tanı:** `{active_case.get('tanim', 'Bilinmiyor')}`")
+            st.markdown(f"#### 🔑 {selected_case_name} Cevap Anahtarı")
+            st.markdown(f"**• Kesin Tanı:** {active_case.get('kesin_tani', 'Belirtilmedi')}")
+            st.markdown(f"**• Ayırıcı Tanı Kriteri:** {active_case.get('ayirici_tani', 'Belirtilmedi')}")
+            st.markdown(f"**• Tedavi Protokolü:** {active_case.get('tedavi', 'Belirtilmedi')}")
+            st.markdown(f"**• Kontrendike Müdahaleler:** {active_case.get('kontrendike', 'Belirtilmedi')}")
+            
             st.markdown("---")
-            if st.button("🔓 Tüm İpuçlarını ve Tahlilleri Sınıf İçin Ekranda Aç"):
+            if st.button("🔓 Tüm İpuçlarını Sınıf İçin Ekranda Aç"):
                 st.session_state.history = []
                 for ck, cv in active_case["categories"].items():
                     item_dict = {
                         "cat_key": ck,
-                        "query": "Eğitmen Tarafından Tüm İpuçları Açıldı",
+                        "query": "Eğitmen Toplu Açımı",
                         "title": cv["name"],
                         "content": cv["content"]
                     }
@@ -1286,16 +1290,5 @@ with st.sidebar:
                         item_dict["gorsel"] = cv["gorsel"]
                     st.session_state.history.append(item_dict)
                 st.rerun()
-            
-            st.markdown("#### 📑 Gizli Tüm Kategori İçerikleri:")
-            for ck, cv in active_case["categories"].items():
-                with st.expander(f"📌 {cv['name']}"):
-                    st.write(cv["content"])
         elif pass_code:
             st.error("Hatalı Şifre!")
-'''
-
-with open('/workspace/scratch/build_master_12_cases_comprehensive.py', 'w', encoding='utf-8') as f:
-    f.write(app_code)
-
-print("Master script generator written successfully.")
