@@ -9,7 +9,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Gerdan ve Göğüs Altı Ödemi & Jugular Staz",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Traumatik Retikuloperikarditis olgusunda perikardiyal basınç ve venöz drenaj bozukluğuna bağlı gerdan ödemi ve belirgin venöz dolgunluk."
     },
     "categories": {
@@ -208,7 +208,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Triküspit Kapak Vegetasyonları & Venöz Dolgunluk",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Triküspit kapak üzerinde bakteriyel trombotik ve vegetatif üremeler; venöz staz."
     },
     "categories": {
@@ -359,7 +359,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Brisket Ödemi & Hipobarik Hipoksi Stazı",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Yüksek rakım hipoksisine bağlı pulmoner hipertansiyon ve sağ kalp yetmezliğinde gelişen dev brisket ödemi."
     },
     "categories": {
@@ -640,7 +640,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-11",
       "title": "Dairesel Gri-Beyaz Kireçimsi Trikofiti Lezyonları",
-      "file": "gorseller/figure_1_2_11.jpg",
+      "file": "gorseller/figure_1_2_11.png",
       "desc": "Baş ve göz çevresinde dairesel, kepekli kireçimsi kabuklanma ve alopezi."
     },
     "categories": {
@@ -746,7 +746,7 @@
         "gorsel": {
           "fig": "Figure 1.2-11",
           "title": "Mikroskopik Mantar Sporu (%10 KOH Hazırlığı)",
-          "file": "gorseller/figure_1_2_11.jpg",
+          "file": "gorseller/figure_1_2_11.png",
           "desc": "%10 KOH ile muamele edilmiş deri kazıntısında kıl şaftını saran küresel Trichophyton verrucosum ektotriks artrospor dizilimi (40x)."
         },
         "content": "%10 KOH hazırlığında kıl şaftı etrafında ektotriks artrospor zincirleri (Trichophyton verrucosum) izlenmiştir."
@@ -768,7 +768,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.3-18",
       "title": "Sarkoptik Uyuz Deri Lezyonları & Likenizasyon",
-      "file": "gorseller/figure_1_3_18.jpg",
+      "file": "gorseller/figure_1_3_18.png",
       "desc": "Deride şiddetli likenizasyon, kalınlaşma, kepeklenme ve kaşıntıya bağlı ekskoriasyon."
     },
     "categories": {
@@ -872,7 +872,7 @@
         "gorsel": {
           "fig": "Figure 1.3-18",
           "title": "Mikroskopik Sarcoptes Scabiei Akari",
-          "file": "gorseller/figure_1_3_18.jpg",
+          "file": "gorseller/figure_1_3_18.png",
           "desc": "Derin deri kazıntısında mineral yağ altında tespit edilen canlı ergin Sarcoptes scabiei akarı (10x-40x)."
         },
         "content": "Derin deri kazıntısında mineral yağ altında canlı Sarcoptes scabiei ergin akarları ve yumurtaları tespit edilmiştir."
@@ -894,7 +894,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.7-35",
       "title": "Hepatojen Fotosensitizasyon (Boyun ve Sırt Pigmentsiz Deri Nekrozu)",
-      "file": "gorseller/figure_1_7_35.jpg",
+      "file": "gorseller/figure_1_7_35.png",
       "desc": "Yalnızca beyaz (pigmentsiz) deri alanlarında soyulma, hamur ödemi, nekroz ve şiddetli hipersensitivite; siyah pigmentli derinin tamamen sağlam kalması."
     },
     "categories": {
@@ -1031,7 +1031,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.5-1",
       "title": "Akut Ürtiker (Ödem Plakları)",
-      "file": "gorseller/figure_1_5_1.jpg",
+      "file": "gorseller/figure_1_5_1.png",
       "desc": "Gövde ve boyun derisinde aniden beliren dairesel ödemli kabarık ürtiker plakları (urtica)."
     },
     "categories": {
@@ -1272,7 +1272,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Frontal Sinüs Ampiyemi & Burun Akıntısı",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Açık dehorning (boynuz kesme) sonrası gelişen kronik frontal sinüzitte burun deliğinden gelen kranio-ventral pürülan akıntı."
     },
     "categories": {
@@ -1393,7 +1393,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Hava Kesesi Mikozu & Epistaksis",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Hava kesesindeki Aspergillus plaklarının A. carotis interna'yı erode etmesi sonucu gelişen şiddetli tek taraflı epistaksis."
     },
     "categories": {
@@ -1516,7 +1516,7 @@
     "makroskopik_gorsel": {
       "fig": "Figure 1.2-1",
       "title": "Hava Kesesi Empiyemi & Gurm Akıntısı",
-      "file": "gorseller/figure_1_2_1.jpg",
+      "file": "gorseller/figure_1_2_1.png",
       "desc": "Streptococcus equi enfeksiyonu (Gurm) sonrası hava kesesinde pürülan eksudat birikimi ve burun akıntısı."
     },
     "categories": {
